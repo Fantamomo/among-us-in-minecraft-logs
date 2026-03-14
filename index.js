@@ -78,6 +78,6 @@ app.get("/log/:id", async (req, res) => {
     res.status(503).json({error: "not implemented"})
 })
 
-app.listen(process.env.PORT || 3000, () => {
+app.listen(process.env.PORT || 29243, () => {
     console.log("server running")
 })
