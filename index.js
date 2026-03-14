@@ -53,7 +53,7 @@ app.post("/upload", async (req, res) => {
     }
 })
 
-app.get("/log/:id", async (req, res) => {
+app.get("/raw/:id", async (req, res) => {
 
     try {
 
@@ -72,6 +72,10 @@ app.get("/log/:id", async (req, res) => {
     } catch {
         res.status(404).json({error: "not found"})
     }
+})
+
+app.get("/log/:id", async (req, res) => {
+    res.status(503).json({error: "not implemented"})
 })
 
 app.listen(process.env.PORT || 3000, () => {
