@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Log Viewer</title>
+</head>
+<body>
+<h1>Game Log</h1>
+<p id="status">Loading...</p>
+<div id="result"></div>
+
+<script>
+    const id = location.pathname.split("/").pop();
+
+    fetch("/raw/" + id)
+        .then(res => {
+            if (!res.ok) throw new Error("Not found");
+            return res.json();
+        })
+        .then(data => {
+            document.getElementById("status").textContent = "";
+            const result = document.getElementById("result");
+
+            const log = data.log ?? [];
+            const meta = data.metadata ?? {};
+
+            let html = "<h2>Metadata</h2>";
+            html += "<p>Area: " + (meta.area ?? "?") + "</p>";
+            html += "<p>Code: " + (meta.code ?? "?") + "</p>";
+            html += "<p>Max Players: " + (meta.maxPlayers ?? "?") + "</p>";
+            html += "<p>Created At: " + (data.createdAt ?? "?") + "</p>";
+
+            const winnerEvent = log.find(e => e.type === "winner_announcement");
+            if (winnerEvent) {
+                html += "<h2>Winner</h2>";
+                html += "<p>" + winnerEvent.data.winner + "</p>";
+            }
+
+            const players = [...new Set(
+                log.filter(e => e.data?.player).map(e => e.data.player)
+            )];
+            html += "<h2>Players (" + players.length + ")</h2><ul>";
+            for (const player of players) {
+                const role = log.find(e => e.type === "assign_role" && e.data?.player === player)?.data?.role ?? "unknown";
+                const tasks = log.filter(e => e.type === "task_assigned" && e.data?.player === player).map(e => e.data.task);
+                html += "<li>" + player + " &mdash; Role: " + role + ", Tasks: " + tasks.length + "</li>";
+            }
+            html += "</ul>";
+
+            const eventTypes = {};
+            for (const e of log) {
+                eventTypes[e.type] = (eventTypes[e.type] ?? 0) + 1;
+            }
+            html += "<h2>Events (" + log.length + " total)</h2><ul>";
+            for (const [type, count] of Object.entries(eventTypes)) {
+                html += "<li>" + type + ": " + count + "</li>";
+            }
+            html += "</ul>";
+
+            result.innerHTML = html;
+        })
+        .catch(err => {
+            document.getElementById("status").textContent = "Error: " + err.message;
+        });
+</script>
+</body>
+</html>
