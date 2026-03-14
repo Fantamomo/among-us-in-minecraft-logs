@@ -1,0 +1,11 @@
+{
+  "name": "among-us-in-minecraft-logs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "author": "Fantamomo",
+  "type": "module",
+  "dependencies": {
+    "express": "^4.19.0"
+  }
+}
