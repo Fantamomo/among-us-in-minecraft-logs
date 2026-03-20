@@ -75,19 +75,6 @@ app.get("/raw/:id", async (req, res) => {
 })
 
 app.get("/log/:id", async (req, res) => {
-    const { id } = req.params
-
-    if (!/^[a-f0-9]{16}$/.test(id)) {
-        return res.status(400).json({ error: "invalid id" })
-    }
-
-    const filePath = path.join(LOG_DIR, `${id}.json`)
-    try {
-        await fs.access(filePath)
-    } catch {
-        return res.status(404).json({ error: "not found" })
-    }
-
     res.sendFile(path.resolve("frontend/index.html"))
 })
 
