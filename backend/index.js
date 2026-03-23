@@ -2,11 +2,21 @@ import express from "express"
 import crypto from "crypto"
 import fs from "fs/promises"
 import path from "path"
+import rateLimit from "express-rate-limit"
+import {collectStatistics} from "./stats.js";
 
 const app = express()
 
-const LOG_DIR = path.resolve("logs")
+const LOG_DIR = path.resolve("../logs")
 const LOG_TTL = 60 * 60 * 1000
+
+const uploadLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    limit: 5,
+    standardHeaders: "draft-7",
+    legacyHeaders: false,
+    message: { error: 'Too many requests, please try again later.' }
+})
 
 app.use(express.json({limit: "1mb"}))
 
@@ -23,7 +33,7 @@ app.get("/", (req, res) => {
     res.redirect("https://among-us-in-minecraft.docs.fantamomo.com")
 })
 
-app.post("/upload", async (req, res) => {
+app.post("/upload", uploadLimiter, async (req, res) => {
 
     try {
 
@@ -34,7 +44,9 @@ app.post("/upload", async (req, res) => {
         const id = crypto.randomBytes(8).toString("hex")
         const filePath = path.join(LOG_DIR, `${id}.json`)
 
-        await fs.writeFile(filePath, JSON.stringify(req.body))
+        const rawBody = JSON.stringify(req.body)
+
+        await fs.writeFile(filePath, rawBody)
 
         setTimeout(async () => {
             try {
@@ -42,6 +54,18 @@ app.post("/upload", async (req, res) => {
             } catch {
             }
         }, LOG_TTL)
+
+        const stats = "statistics" in req.query &&
+            (req.query.statistics === "true" ||
+                req.query.statistics === "1")
+
+        if (stats) {
+            try {
+                collectStatistics(id, req.body, Buffer.byteLength(rawBody))
+            } catch (err) {
+                console.error("state collection failed", err)
+            }
+        }
 
         res.json({
             url: `/log/${id}`
@@ -75,7 +99,7 @@ app.get("/raw/:id", async (req, res) => {
 })
 
 app.get("/log/:id", async (req, res) => {
-    res.sendFile(path.resolve("frontend/index.html"))
+    res.sendFile(path.resolve("../frontend/index.html"))
 })
 
 app.listen(process.env.PORT || 29243, () => {
