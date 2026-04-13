@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Among Us — Log Viewer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/asserts/log-style.css">
+</head>
+<body>
+
+<div class="bg-grid" aria-hidden="true"></div>
+<div class="bg-glow" aria-hidden="true"></div>
+
+<div class="app-wrap">
+
+    <header class="app-header">
+        <a href="/" class="back-btn" title="Zurück zur Startseite">←</a>
+        <div class="header-center">
+            <div class="header-eyebrow">AMONG US</div>
+            <h1 class="app-title">ACTION LOG VIEWER</h1>
+        </div>
+        <button class="theme-btn" id="theme-btn" title="Theme wechseln">◑</button>
+    </header>
+
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-inner">
+            <div class="load-rings"><div></div><div></div><div></div></div>
+            <div class="load-text" id="load-text">Verbinde…</div>
+            <div class="load-bar"><div class="load-bar-fill" id="load-bar-fill"></div></div>
+        </div>
+    </div>
+
+    <div id="error-screen" class="error-screen" style="display:none;">
+        <div class="error-inner">
+            <div class="error-code">404</div>
+            <div class="error-title" id="error-title">Log nicht gefunden</div>
+            <div class="error-sub" id="error-sub">Dieser Log existiert nicht oder ist abgelaufen.</div>
+            <a href="/" class="error-back">← Zurück</a>
+        </div>
+    </div>
+
+    <div id="log-section" class="container-fluid px-3 px-lg-4" style="max-width:2000px; display:none;">
+
+        <div id="winner-banner" style="display:none;"></div>
+
+        <div id="kill-board-section" style="display:none;" class="kill-board-card mb-3">
+            <div class="section-label">☠ Kill-Board</div>
+            <div id="kill-board" class="kill-board-grid"></div>
+        </div>
+
+        <div class="panel mb-3">
+            <div class="section-label">Spielübersicht</div>
+            <div id="meta-row" class="meta-row mb-3"></div>
+            <div class="row g-2" id="stats-row"></div>
+        </div>
+
+        <div class="panel mb-3" id="phase-bar-section" style="display:none;">
+            <div class="section-label">Phasen-Timeline <span class="dim mono" style="font-size:.58rem;">(hover = Dauer)</span></div>
+            <div id="phase-bar" class="phase-bar mb-2"></div>
+            <div id="phase-legend" class="phase-legend"></div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-xl-3 col-lg-4">
+                <div class="panel mb-3">
+                    <div class="section-label">Crew-Manifest <span class="dim mono" style="font-size:.56rem;">(klicken)</span></div>
+                    <div id="players-grid" class="d-flex flex-column gap-2"></div>
+                </div>
+                <div class="panel mb-3">
+                    <div class="section-label">Aktivitäts-Radar <span class="dim mono" style="font-size:.56rem;">(filtern)</span></div>
+                    <div id="activity-section"></div>
+                </div>
+                <div class="panel mb-3">
+                    <div class="section-label">Task-Fortschritt</div>
+                    <div id="task-progress"></div>
+                </div>
+                <div class="panel mb-3">
+                    <div class="section-label">Vent-Protokoll</div>
+                    <div id="vent-section" class="scroll-panel" style="max-height:240px;"></div>
+                </div>
+                <div class="panel mb-3" id="abilities-section" style="display:none;">
+                    <div class="section-label">Sonderfähigkeiten</div>
+                    <div id="abilities-content" class="scroll-panel" style="max-height:280px;"></div>
+                </div>
+                <div class="panel" id="settings-section" style="display:none;">
+                    <div class="section-label">Einstellungsänderungen</div>
+                    <div id="settings-changes"></div>
+                </div>
+            </div>
+
+            <div class="col-xl-6 col-lg-5">
+                <div class="panel timeline-panel">
+                    <div class="section-label">
+                        Event-Timeline
+                        <span class="dim mono" style="font-size:.55rem;">Klick = JSON · Kategorie = filtern</span>
+                    </div>
+                    <div class="tl-controls">
+                        <div class="search-wrap">
+                            <span class="search-icon">⌕</span>
+                            <input class="search-input" id="tl-search" type="text" placeholder="Suchen… (Strg+F) — mehrere Begriffe mit Leerzeichen">
+                            <button class="regex-btn" id="regex-btn" title="Reguläre Ausdrücke">.*</button>
+                        </div>
+                    </div>
+                    <div class="tl-filter-row">
+                        <select class="pf-select" id="pf-select">
+                            <option value="">Alle Spieler</option>
+                        </select>
+                        <select class="pf-select" id="pf-role-select">
+                            <option value="">Alle Rollen</option>
+                            <option value="impostor">Impostoren</option>
+                            <option value="crewmate">Crew</option>
+                            <option value="bot">Bots</option>
+                        </select>
+                        <button class="chip-btn" id="clear-filters" onclick="clearAllFilters()">✕ Reset</button>
+                    </div>
+                    <div class="filter-chips" id="filter-bar"></div>
+                    <div class="tl-count-row">
+                        <span class="tl-count" id="tl-count"></span>
+                        <div class="tl-sort-wrap">
+                            <button class="sort-btn active" id="sort-asc" title="Älteste zuerst">↑ ASC</button>
+                            <button class="sort-btn" id="sort-desc" title="Neueste zuerst">↓ DESC</button>
+                        </div>
+                    </div>
+                    <div class="scroll-panel timeline" id="timeline" style="max-height:calc(100vh - 280px);min-height:400px;"></div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-lg-3">
+                <div class="panel mb-3">
+                    <div class="section-label">Meetings <span class="dim mono" style="font-size:.56rem;">(klicken)</span></div>
+                    <div id="meetings-section" class="scroll-panel" style="max-height:380px;"></div>
+                </div>
+                <div class="panel mb-3">
+                    <div class="section-label">Erkenntnisse</div>
+                    <div id="insights-section" class="scroll-panel" style="max-height:360px;"></div>
+                </div>
+                <div class="panel">
+                    <div class="section-label">Chatverlauf</div>
+                    <div id="chat-section" class="scroll-panel" style="max-height:320px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="player-modal-overlay" class="modal-overlay" role="dialog" aria-modal="true">
+    <div class="player-modal" id="player-modal-content"></div>
+</div>
+
+<div id="evtd-overlay" class="evtd-overlay" role="dialog" aria-modal="true">
+    <div class="evtd-box" id="evtd-content"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+<script src="/asserts/log-script.js"></script>
+<script>
+    const themeBtn = document.getElementById('theme-btn');
+    const savedTheme = localStorage.getItem('au-theme') || 'dark';
+    if (savedTheme === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+        themeBtn.textContent = '○';
+    }
+    themeBtn.addEventListener('click', () => {
+        const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+        document.documentElement.setAttribute('data-theme', isLight ? 'dark' : 'light');
+        themeBtn.textContent = isLight ? '◑' : '○';
+        localStorage.setItem('au-theme', isLight ? 'dark' : 'light');
+    });
+
+    function clearAllFilters() {
+        document.getElementById('tl-search').value = '';
+        searchQuery = '';
+        playerFilterUuids.clear();
+        document.getElementById('pf-select').value = '';
+        document.getElementById('pf-role-select').value = '';
+        roleFilter = '';
+        document.querySelectorAll('.player-card').forEach(c => c.classList.remove('player-focused'));
+        if (typeof activeFilt !== 'undefined' && G.log) {
+            const allCats = [...new Set(G.log.map(e => getCat(e.type)))];
+            allCats.forEach(c => activeFilt.add(c));
+            document.querySelectorAll('.chip-btn[data-cat]').forEach(b => b.classList.add('active'));
+            const fa = document.getElementById('filter-all');
+            if (fa) fa.classList.add('active');
+        }
+        if (typeof renderTimeline === 'function') renderTimeline();
+    }
+
+    async function boot() {
+        const code = window.__LOG_CODE__;
+        const setLoad = t => { document.getElementById('load-text').textContent = t; };
+        const fillBar = p => { document.getElementById('load-bar-fill').style.width = p + '%'; };
+
+        if (code === 'local') {
+            setLoad('Lokale Daten werden geladen…');
+            fillBar(50);
+            const raw = sessionStorage.getItem('au-log-local');
+            if (!raw) { showError('Keine lokalen Daten vorhanden.', 'Bitte gehe zurück und lade eine Datei hoch.'); return; }
+            fillBar(100);
+            setTimeout(async () => {
+                try { const data = JSON.parse(raw); await renderLog(data); }
+                catch(e) { showError('Fehler beim Parsen', e.message); }
+            }, 300);
+            return;
+        }
+
+        setLoad('Verbinde mit Server…');
+        fillBar(20);
+        const protocol = window.location.protocol;
+        const hostname = window.location.hostname;
+        const port = window.location.port;
+        const full = `${protocol}//${hostname}${port ? ':' + port : ''}`;
+        try {
+            const res = await fetch(`${full}/raw/${encodeURIComponent(code)}`);
+            fillBar(70);
+            if (res.status === 404) { showError('Log nicht gefunden', 'Dieser Log-Code existiert nicht oder ist abgelaufen.'); return; }
+            if (!res.ok) { showError('Server-Fehler', `HTTP ${res.status}`); return; }
+            const data = await res.json();
+            fillBar(100);
+            setLoad('Verarbeite…');
+            setTimeout(async () => { await renderLog(data); }, 200);
+        } catch(e) { showError('Verbindungsfehler', e.message); }
+    }
+
+    function showError(title, sub) {
+        document.getElementById('loading-screen').style.display = 'none';
+        document.getElementById('error-screen').style.display = 'flex';
+        document.getElementById('error-title').textContent = title;
+        document.getElementById('error-sub').textContent = sub || '';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        ensureModals();
+        wireModalEvents();
+        boot();
+    });
+</script>
+</body>
+</html>
