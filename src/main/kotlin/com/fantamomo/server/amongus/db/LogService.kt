@@ -14,7 +14,7 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
 import kotlin.time.Clock.System
-import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration
 
 class LogService(database: Database) {
 
@@ -25,7 +25,7 @@ class LogService(database: Database) {
     }
 
     @OptIn(ExperimentalSerializationApi::class)
-    suspend fun createLog(id: String, fileSize: Long): Log {
+    suspend fun createLog(id: String, fileSize: Long, duration: Duration): Log {
         dbQuery {
             val instant = System.now()
             val now = instant.toLocalDateTime(TimeZone.UTC)
@@ -39,7 +39,7 @@ class LogService(database: Database) {
             LogsLifecycleTable.insert {
                 it[LogsLifecycleTable.state] = LogState.TEMPORARY
                 it[LogsLifecycleTable.logId] = id
-                it[LogsLifecycleTable.expiresAt] = (instant + 2.hours).toLocalDateTime(TimeZone.UTC)
+                it[LogsLifecycleTable.expiresAt] = (instant + duration).toLocalDateTime(TimeZone.UTC)
             }
         }
 
@@ -65,6 +65,7 @@ class LogService(database: Database) {
                     externalType = it[LogsReferencesTable.externalType],
                     externalId = it[LogsReferencesTable.externalId],
                     externalRepo = it[LogsReferencesTable.externalRepo],
+                    state = it[LogsReferencesTable.state]
                 )
             }
         )
@@ -87,13 +88,15 @@ class LogService(database: Database) {
                         updatedAt = it[LogsLifecycleTable.updatedAt].toInstant(TimeZone.UTC)
                     )
                 },
-                references = referenceRow.filter { it[LogsReferencesTable.logId] == log[LogsReferencesTable.logId] }.map {
-                    LogReferenceData(
-                        externalType = it[LogsReferencesTable.externalType],
-                        externalId = it[LogsReferencesTable.externalId],
-                        externalRepo = it[LogsReferencesTable.externalRepo],
-                    )
-                }
+                references = referenceRow.filter { it[LogsReferencesTable.logId] == log[LogsReferencesTable.logId] }
+                    .map {
+                        LogReferenceData(
+                            externalType = it[LogsReferencesTable.externalType],
+                            externalId = it[LogsReferencesTable.externalId],
+                            externalRepo = it[LogsReferencesTable.externalRepo],
+                            state = it[LogsReferencesTable.state]
+                        )
+                    }
             )
         }
     }
@@ -121,6 +124,7 @@ class LogService(database: Database) {
             it[LogsReferencesTable.externalRepo] = externalRepo
             it[LogsReferencesTable.externalId] = externalId
             it[LogsReferencesTable.externalType] = externalType
+            it[LogsReferencesTable.state] = LogReferenceData.LogReferenceState.OPEN
         }
     }
 
@@ -128,6 +132,61 @@ class LogService(database: Database) {
         LogsLifecycleTable.update({ LogsLifecycleTable.logId eq id }) {
             it[LogsLifecycleTable.state] = state
             it[LogsLifecycleTable.updatedAt] = System.now().toLocalDateTime(TimeZone.UTC)
+        }
+    }
+
+    suspend fun removeLinks(externalRepo: String, externalId: Int, externalType: String) = dbQuery {
+        LogsReferencesTable.deleteWhere {
+            (this.externalRepo eq externalRepo) and
+                    (this.externalId eq externalId) and
+                    (this.externalType eq externalType)
+        }
+    }
+
+    suspend fun updateRefState(repo: String, id: Int, type: String, closed: LogReferenceData.LogReferenceState) =
+        dbQuery {
+            LogsReferencesTable.update({
+                (LogsReferencesTable.externalRepo eq repo) and
+                        (LogsReferencesTable.externalId eq id) and
+                        (LogsReferencesTable.externalType eq type)
+            }) {
+                it[LogsReferencesTable.state] = closed
+            }
+        }
+
+    suspend fun getLogs(repo: String, id: Int, type: String): List<Log> = dbQuery {
+        val query = LogsTable
+            .join(LogsLifecycleTable, JoinType.INNER, LogsTable.id, LogsLifecycleTable.logId)
+            .join(LogsReferencesTable, JoinType.INNER, LogsTable.id, LogsReferencesTable.logId)
+            .selectAll()
+            .where {
+                (LogsReferencesTable.externalRepo eq repo) and
+                        (LogsReferencesTable.externalId eq id) and
+                        (LogsReferencesTable.externalType eq type)
+            }
+
+        val logRow = query.toList()
+
+        logRow.groupBy { it[LogsTable.id] }.map { (_, rows) ->
+            val log = rows.first()
+            Log(
+                id = log[LogsTable.id],
+                createdAt = log[LogsTable.createdAt].toInstant(TimeZone.UTC),
+                fileSize = log[LogsTable.fileSize],
+                lifecycle = LogLifecycleData(
+                    state = log[LogsLifecycleTable.state],
+                    expiresAt = log[LogsLifecycleTable.expiresAt].toInstant(TimeZone.UTC),
+                    updatedAt = log[LogsLifecycleTable.updatedAt].toInstant(TimeZone.UTC)
+                ),
+                references = rows.map {
+                    LogReferenceData(
+                        externalType = it[LogsReferencesTable.externalType],
+                        externalId = it[LogsReferencesTable.externalId],
+                        externalRepo = it[LogsReferencesTable.externalRepo],
+                        state = it[LogsReferencesTable.state]
+                    )
+                }
+            )
         }
     }
 }
