@@ -7,6 +7,7 @@ import kotlin.io.path.createFile
 import kotlin.io.path.notExists
 import kotlin.io.path.reader
 import kotlin.io.path.writer
+import kotlin.time.Duration
 
 object ServerConfig {
     private val logger = LoggerFactory.getLogger("ServerConfig")
@@ -14,6 +15,7 @@ object ServerConfig {
     val PORT: Int
     val HOST: String
     val GITHUB_ACTION_KEY: String
+    val SAVE_LOG_DURATION: Duration
 
     init {
         val file = ServerConstants.configFile
@@ -35,6 +37,7 @@ object ServerConfig {
             PORT = properties.getProperty("PORT").toInt()
             HOST = properties.getProperty("HOST")
             GITHUB_ACTION_KEY = properties.getProperty("GITHUB_ACTION_KEY")
+            SAVE_LOG_DURATION = Duration.parse(properties.getProperty("SAVE_LOG_DURATION"))
         } catch (e: Exception) {
             logger.error("Invalid configuration values", e)
             throw e
@@ -45,5 +48,6 @@ object ServerConfig {
         setProperty("PORT", "8080")
         setProperty("HOST", "0.0.0.0")
         setProperty("GITHUB_ACTION_KEY", "sk_auiml_"+ByteArray(16).also { SecureRandom().nextBytes(it) }.toHexString())
+        setProperty("SAVE_LOG_DURATION", "24h")
     }
 }
