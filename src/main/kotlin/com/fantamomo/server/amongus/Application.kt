@@ -24,7 +24,7 @@ fun main(): Unit = runBlocking {
         manager.initialize()
 
         launch {
-            val server = embeddedServer(Netty, port = 8080, host = "0.0.0.0") { module(manager) }
+            val server = embeddedServer(Netty, port = ServerConfig.PORT, host = ServerConfig.HOST) { module(manager) }
             server.startSuspend(wait = true)
         }
 
