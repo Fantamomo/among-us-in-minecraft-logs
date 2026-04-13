@@ -3,5 +3,11 @@ package com.fantamomo.server.amongus.model
 data class LogReferenceData(
     val externalType: String,
     val externalId: Int,
-    val externalRepo: String
-)
+    val externalRepo: String,
+    val state: LogReferenceState
+) {
+    enum class LogReferenceState {
+        OPEN,
+        CLOSED
+    }
+}
