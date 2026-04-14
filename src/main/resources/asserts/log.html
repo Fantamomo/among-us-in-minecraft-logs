@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Among Us — Log Viewer</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.8/css/bootstrap.min.css">
     <link rel="stylesheet" href="/asserts/log-style.css">
 </head>
 <body>
@@ -17,18 +17,18 @@
 <div class="app-wrap">
 
     <header class="app-header">
-        <a href="/" class="back-btn" title="Zurück zur Startseite">←</a>
+        <a href="/" class="back-btn" title="Back to start">←</a>
         <div class="header-center">
             <div class="header-eyebrow">AMONG US</div>
             <h1 class="app-title">ACTION LOG VIEWER</h1>
         </div>
-        <button class="theme-btn" id="theme-btn" title="Theme wechseln">◑</button>
+        <button class="theme-btn" id="theme-btn" title="Change theme">◑</button>
     </header>
 
     <div id="loading-screen" class="loading-screen">
         <div class="loading-inner">
             <div class="load-rings"><div></div><div></div><div></div></div>
-            <div class="load-text" id="load-text">Verbinde…</div>
+            <div class="load-text" id="load-text">Connecting…</div>
             <div class="load-bar"><div class="load-bar-fill" id="load-bar-fill"></div></div>
         </div>
     </div>
@@ -36,9 +36,9 @@
     <div id="error-screen" class="error-screen" style="display:none;">
         <div class="error-inner">
             <div class="error-code">404</div>
-            <div class="error-title" id="error-title">Log nicht gefunden</div>
-            <div class="error-sub" id="error-sub">Dieser Log existiert nicht oder ist abgelaufen.</div>
-            <a href="/" class="error-back">← Zurück</a>
+            <div class="error-title" id="error-title">Log not found</div>
+            <div class="error-sub" id="error-sub">This log does not exist or has expired.</div>
+            <a href="/" class="error-back">← Back</a>
         </div>
     </div>
 
@@ -52,13 +52,13 @@
         </div>
 
         <div class="panel mb-3">
-            <div class="section-label">Spielübersicht</div>
+            <div class="section-label">Player overview</div>
             <div id="meta-row" class="meta-row mb-3"></div>
             <div class="row g-2" id="stats-row"></div>
         </div>
 
         <div class="panel mb-3" id="phase-bar-section" style="display:none;">
-            <div class="section-label">Phasen-Timeline <span class="dim mono" style="font-size:.58rem;">(hover = Dauer)</span></div>
+            <div class="section-label">Phase-Timeline <span class="dim mono" style="font-size:.58rem;">(hover = Duration)</span></div>
             <div id="phase-bar" class="phase-bar mb-2"></div>
             <div id="phase-legend" class="phase-legend"></div>
         </div>
@@ -66,27 +66,27 @@
         <div class="row g-3">
             <div class="col-xl-3 col-lg-4">
                 <div class="panel mb-3">
-                    <div class="section-label">Crew-Manifest <span class="dim mono" style="font-size:.56rem;">(klicken)</span></div>
+                    <div class="section-label">Crew-Manifest <span class="dim mono" style="font-size:.56rem;">(click)</span></div>
                     <div id="players-grid" class="d-flex flex-column gap-2"></div>
                 </div>
                 <div class="panel mb-3">
-                    <div class="section-label">Aktivitäts-Radar <span class="dim mono" style="font-size:.56rem;">(filtern)</span></div>
+                    <div class="section-label">Activity-Radar <span class="dim mono" style="font-size:.56rem;">(filter)</span></div>
                     <div id="activity-section"></div>
                 </div>
                 <div class="panel mb-3">
-                    <div class="section-label">Task-Fortschritt</div>
+                    <div class="section-label">Task-Progress</div>
                     <div id="task-progress"></div>
                 </div>
                 <div class="panel mb-3">
-                    <div class="section-label">Vent-Protokoll</div>
+                    <div class="section-label">Vent-Log</div>
                     <div id="vent-section" class="scroll-panel" style="max-height:240px;"></div>
                 </div>
                 <div class="panel mb-3" id="abilities-section" style="display:none;">
-                    <div class="section-label">Sonderfähigkeiten</div>
+                    <div class="section-label">Special abilities</div>
                     <div id="abilities-content" class="scroll-panel" style="max-height:280px;"></div>
                 </div>
                 <div class="panel" id="settings-section" style="display:none;">
-                    <div class="section-label">Einstellungsänderungen</div>
+                    <div class="section-label">Settings changes</div>
                     <div id="settings-changes"></div>
                 </div>
             </div>
@@ -95,22 +95,22 @@
                 <div class="panel timeline-panel">
                     <div class="section-label">
                         Event-Timeline
-                        <span class="dim mono" style="font-size:.55rem;">Klick = JSON · Kategorie = filtern</span>
+                        <span class="dim mono" style="font-size:.55rem;">Click = JSON · Category = filter</span>
                     </div>
                     <div class="tl-controls">
                         <div class="search-wrap">
                             <span class="search-icon">⌕</span>
-                            <input class="search-input" id="tl-search" type="text" placeholder="Suchen… (Strg+F) — mehrere Begriffe mit Leerzeichen">
-                            <button class="regex-btn" id="regex-btn" title="Reguläre Ausdrücke">.*</button>
+                            <input class="search-input" id="tl-search" type="text" placeholder="Search… (Ctrl+F) — multiple terms with spaces">
+                            <button class="regex-btn" id="regex-btn" title="Regular Expressions">.*</button>
                         </div>
                     </div>
                     <div class="tl-filter-row">
                         <select class="pf-select" id="pf-select">
-                            <option value="">Alle Spieler</option>
+                            <option value="">All players</option>
                         </select>
                         <select class="pf-select" id="pf-role-select">
-                            <option value="">Alle Rollen</option>
-                            <option value="impostor">Impostoren</option>
+                            <option value="">All Roles</option>
+                            <option value="impostor">Impostors</option>
                             <option value="crewmate">Crew</option>
                             <option value="bot">Bots</option>
                         </select>
@@ -120,8 +120,8 @@
                     <div class="tl-count-row">
                         <span class="tl-count" id="tl-count"></span>
                         <div class="tl-sort-wrap">
-                            <button class="sort-btn active" id="sort-asc" title="Älteste zuerst">↑ ASC</button>
-                            <button class="sort-btn" id="sort-desc" title="Neueste zuerst">↓ DESC</button>
+                            <button class="sort-btn active" id="sort-asc" title="Oldest first">↑ ASC</button>
+                            <button class="sort-btn" id="sort-desc" title="Newest first">↓ DESC</button>
                         </div>
                     </div>
                     <div class="scroll-panel timeline" id="timeline" style="max-height:calc(100vh - 280px);min-height:400px;"></div>
@@ -130,15 +130,15 @@
 
             <div class="col-xl-3 col-lg-3">
                 <div class="panel mb-3">
-                    <div class="section-label">Meetings <span class="dim mono" style="font-size:.56rem;">(klicken)</span></div>
+                    <div class="section-label">Meetings <span class="dim mono" style="font-size:.56rem;">(click)</span></div>
                     <div id="meetings-section" class="scroll-panel" style="max-height:380px;"></div>
                 </div>
                 <div class="panel mb-3">
-                    <div class="section-label">Erkenntnisse</div>
+                    <div class="section-label">Insights</div>
                     <div id="insights-section" class="scroll-panel" style="max-height:360px;"></div>
                 </div>
                 <div class="panel">
-                    <div class="section-label">Chatverlauf</div>
+                    <div class="section-label">Chat history</div>
                     <div id="chat-section" class="scroll-panel" style="max-height:320px;"></div>
                 </div>
             </div>
@@ -154,7 +154,7 @@
     <div class="evtd-box" id="evtd-content"></div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.8/js/bootstrap.bundle.min.js"></script>
 <script src="/asserts/log-script.js"></script>
 <script>
     const themeBtn = document.getElementById('theme-btn');
@@ -194,19 +194,19 @@
         const fillBar = p => { document.getElementById('load-bar-fill').style.width = p + '%'; };
 
         if (code === 'local') {
-            setLoad('Lokale Daten werden geladen…');
+            setLoad('Local data is loading...');
             fillBar(50);
             const raw = sessionStorage.getItem('au-log-local');
-            if (!raw) { showError('Keine lokalen Daten vorhanden.', 'Bitte gehe zurück und lade eine Datei hoch.'); return; }
+            if (!raw) { showError('No local data available.', 'Please go back and upload a file.'); return; }
             fillBar(100);
             setTimeout(async () => {
                 try { const data = JSON.parse(raw); await renderLog(data); }
-                catch(e) { showError('Fehler beim Parsen', e.message); }
+                catch(e) { showError('Parsing error', e.message); }
             }, 300);
             return;
         }
 
-        setLoad('Verbinde mit Server…');
+        setLoad('Connecting to Server…');
         fillBar(20);
         const protocol = window.location.protocol;
         const hostname = window.location.hostname;
@@ -215,13 +215,13 @@
         try {
             const res = await fetch(`${full}/raw/${encodeURIComponent(code)}`);
             fillBar(70);
-            if (res.status === 404) { showError('Log nicht gefunden', 'Dieser Log-Code existiert nicht oder ist abgelaufen.'); return; }
-            if (!res.ok) { showError('Server-Fehler', `HTTP ${res.status}`); return; }
+            if (res.status === 404) { showError('Log not found', 'This log code does not exist or has expired.'); return; }
+            if (!res.ok) { showError('Server-Error', `HTTP ${res.status}`); return; }
             const data = await res.json();
             fillBar(100);
-            setLoad('Verarbeite…');
+            setLoad('Processing…');
             setTimeout(async () => { await renderLog(data); }, 200);
-        } catch(e) { showError('Verbindungsfehler', e.message); }
+        } catch(e) { showError('Connection Error', e.message); }
     }
 
     function showError(title, sub) {

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -260,7 +260,7 @@
 <div class="bg-grid"></div>
 <div class="bg-glow"></div>
 
-<button class="theme-toggle" id="theme-btn" title="Theme wechseln">◑</button>
+<button class="theme-toggle" id="theme-btn" title="Change theme">◑</button>
 
 <div class="wrap">
     <div class="logo-area">
@@ -281,36 +281,36 @@
 
         <div class="tab-panel active" id="panel-file">
             <div class="feature-row">
-                <span class="feature-chip">📦 Alle Pakete</span>
-                <span class="feature-chip">🤖 Bot-Erkennung</span>
-                <span class="feature-chip">🔍 Regex-Suche</span>
+                <span class="feature-chip">📦 All packages</span>
+                <span class="feature-chip">🤖 Bot detection</span>
+                <span class="feature-chip">🔍 Regex search</span>
                 <span class="feature-chip">⚔ Kill-Board</span>
-                <span class="feature-chip">🎭 Sonderfähigkeiten</span>
+                <span class="feature-chip">🎭 Special abilities</span>
             </div>
             <div class="drop-zone" id="drop-zone">
                 <span class="drop-icon">📡</span>
-                <div class="drop-title">JSON-Log hier droppen</div>
-                <div class="drop-sub">Drag &amp; Drop · oder klicken zum Auswählen</div>
+                <div class="drop-title">Drop JSON-Log</div>
+                <div class="drop-sub">Drag &amp; Drop · or click to select</div>
                 <input type="file" id="file-input" accept=".json">
             </div>
         </div>
 
         <div class="tab-panel" id="panel-code">
             <div class="input-group">
-                <label class="input-label" for="code-input">Log-Code oder URL</label>
+                <label class="input-label" for="code-input">Log-Code or URL</label>
                 <input
                         class="text-input" id="code-input" type="text"
-                        placeholder="z.B. abc123 oder https://…/log/abc123"
+                        placeholder="z.B. abcd1234 or https://…/log/abcd1234"
                         autocomplete="off" spellcheck="false"
                 >
             </div>
-            <button class="btn-primary" id="open-btn">Log öffnen →</button>
+            <button class="btn-primary" id="open-btn">Open log →</button>
             <div class="error-msg" id="error-msg"></div>
-            <div class="loading-indicator" id="loading-ind">Verbinde…</div>
+            <div class="loading-indicator" id="loading-ind">Connecting…</div>
         </div>
     </div>
 
-    <div class="footer-note">Daten werden lokal verarbeitet · Kein Upload · Open Source</div>
+    <div class="footer-note">Data processed locally · No upload · Open Source</div>
 </div>
 
 <script>
@@ -354,7 +354,7 @@
                 const data = JSON.parse(e.target.result);
                 sessionStorage.setItem('au-log-local', JSON.stringify(data));
                 window.location.href = '/log/local';
-            } catch(err) { alert('Ungültige JSON-Datei: ' + err.message); }
+            } catch(err) { alert('Invalid JSON file: ' + err.message); }
         };
         reader.readAsText(f);
     }
@@ -381,7 +381,7 @@
         const raw = codeInput.value.trim();
         if (!raw) return;
         const code = extractCode(raw);
-        if (!code) { showError('Ungültiger Code oder URL.'); return; }
+        if (!code) { showError('Invalid code or URL.'); return; }
         window.location.href = '/log/' + encodeURIComponent(code);
     }
 

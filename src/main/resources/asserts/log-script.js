@@ -121,64 +121,64 @@ function getCat(type) {
 function describeEvent(e) {
     const d = e.data || {};
     switch (e.type) {
-        case 'game_start': return { text: '🚀 Spiel <strong class="t1">gestartet</strong>' };
-        case 'game_end': return { text: '🏁 Spiel <strong class="t1">beendet</strong>' };
-        case 'game_start_countdown': return { text: '⏳ Countdown gestartet' };
-        case 'countdown_aborted': return { text: `⏳ Countdown <span class="c-red">abgebrochen</span>`, extra: `Grund: ${d.reason} · ${d.remaining}s verbleibend` };
+        case 'game_start': return { text: '🚀 Game <strong class="t1">started</strong>' };
+        case 'game_end': return { text: '🏁 Game <strong class="t1">ended</strong>' };
+        case 'game_start_countdown': return { text: '⏳ Countdown started' };
+        case 'countdown_aborted': return { text: `⏳ Countdown <span class="c-red">abgebrochen</span>`, extra: `Reason: ${d.reason} · ${d.remaining}s left` };
         case 'winner_announcement': {
             const isImp = isImposterRole(d.winner) || d.winner?.toLowerCase().includes('impost');
-            return { text: `🏆 Gewinner: <strong class="${isImp ? 'c-red' : 'c-accent'}">${escHtml(d.winner || '?')}</strong>` };
+            return { text: `🏆 Winner: <strong class="${isImp ? 'c-red' : 'c-accent'}">${escHtml(d.winner || '?')}</strong>` };
         }
         case 'phase_change': return { text: `Phase <span class="t3">${d.old}</span> → <strong class="t1">${d.new}</strong>` };
         case 'host_change': return { text: `★ Host ${d.old ? pChip(d.old) : '<span class="t4">—</span>'} → ${d.new ? pChip(d.new) : '<span class="t4">—</span>'}` };
-        case 'player_join': return { text: `➕ ${pChip(d.player)} beigetreten${d.type ? ` <span class="t4 mono" style="font-size:.62rem;">[${d.type}]</span>` : ''}` };
-        case 'player_leave': return { text: `➖ ${pChip(d.player)} verlassen` };
+        case 'player_join': return { text: `➕ ${pChip(d.player)} joined${d.type ? ` <span class="t4 mono" style="font-size:.62rem;">[${d.type}]</span>` : ''}` };
+        case 'player_leave': return { text: `➖ ${pChip(d.player)} leaved` };
         case 'player_disconnect': return { text: `⚡ ${pChip(d.player)} <span class="c-orange">getrennt</span>` };
-        case 'player_rejoin': return { text: `↩ ${pChip(d.player)} wieder beigetreten` };
+        case 'player_rejoin': return { text: `↩ ${pChip(d.player)} rejoined` };
         case 'player_remove': return { text: `✕ ${pChip(d.player)} <span class="c-red">entfernt</span>` };
         case 'player_death': {
             const r = d.reason;
             if (typeof r === 'object' && r?.type === 'murdered')
-                return { text: `💀 ${pChip(d.player)} <span class="c-red">ermordet</span>`, extra: `Killer: ${pChip(r.killer)}` };
-            return { text: `💀 ${pChip(d.player)} <span class="c-orange">gestorben</span>`, extra: `Grund: ${r}` };
+                return { text: `💀 ${pChip(d.player)} <span class="c-red">killed</span>`, extra: `Killer: ${pChip(r.killer)}` };
+            return { text: `💀 ${pChip(d.player)} <span class="c-orange">died</span>`, extra: `Reason: ${r}` };
         }
         case 'assign_role': return { text: `🎭 ${pChip(d.player)} → <strong class="${isImposterRole(d.role) ? 'c-red' : 'c-accent'}">${escHtml(d.role||'?')}</strong>` };
-        case 'assign_modification': return { text: `🔧 ${pChip(d.player)} Modifikation: <strong>${escHtml(d.modification||'?')}</strong>` };
+        case 'assign_modification': return { text: `🔧 ${pChip(d.player)} Modifications: <strong>${escHtml(d.modification||'?')}</strong>` };
         case 'task_assigned': return { text: `📋 ${pChip(d.player)} ← <span class="t2">${escHtml(d.task?.replace(/_/g,' ')||'?')}</span>` };
-        case 'task_started': return { text: `▶ ${pChip(d.player)} startet <em class="t1">${escHtml(d.task?.replace(/_/g,' ')||'?')}</em>` };
-        case 'task_step_completed': return { text: `▶ ${pChip(d.player)} Schritt ${d.step} · <em>${escHtml(d.task?.replace(/_/g,' ')||'?')}</em>` };
-        case 'task_completed': return { text: `✅ ${pChip(d.player)} <span class="c-green">abgeschlossen</span> <em>${escHtml(d.task?.replace(/_/g,' ')||'?')}</em>` };
-        case 'task_failed': return { text: `❌ ${pChip(d.player)} <span class="c-red">gescheitert</span> <em>${escHtml(d.task?.replace(/_/g,' ')||'?')}</em>` };
-        case 'task_unassigned': return { text: `✕ ${pChip(d.player)} Task entfernt: <em>${escHtml(d.task?.replace(/_/g,' ')||'?')}</em>` };
-        case 'start_sabotage': return { text: `⚠ Sabotage: <strong style="color:#ff6600">${escHtml(d.sabotage?.replace(/_/g,' ')||'?')}</strong>`, extra: d.by ? `von ${pChip(d.by)}` : 'automatisch' };
-        case 'end_sabotage': return { text: `Sabotage <strong>${escHtml(d.sabotage?.replace(/_/g,' ')||'?')}</strong> ${d.fixed ? '<span class="c-green">behoben ✓</span>' : '<span class="c-red">abgelaufen ✗</span>'}` };
-        case 'enter_vent': return { text: `🕳 ${pChip(d.player)} <span style="color:#22d3ee">Vent betreten</span>`, extra: d.location ? `(${d.location.x},${d.location.y},${d.location.z}) Gruppe ${d.ventGroup}` : '' };
-        case 'exit_vent': return { text: `🕳 ${pChip(d.player)} Vent verlassen`, extra: d.location ? `(${d.location.x},${d.location.y},${d.location.z})` : '' };
-        case 'switch_vent': return { text: `🕳 ${pChip(d.player)} Vent gewechselt`, extra: d.from && d.to ? `(${d.from.x},${d.from.z}) → (${d.to.x},${d.to.z}) Gruppe ${d.ventGroup}` : '' };
-        case 'start_creating_vent': return { text: `🕳 ${pChip(d.player)} <span class="c-orange">erstellt Vent</span>`, extra: d.location ? `(${d.location.x},${d.location.y},${d.location.z}) Gruppe ${d.ventGroup}` : '' };
-        case 'finish_creating_vent': return { text: `🕳 ${pChip(d.player)} Vent <span class="c-green">erstellt ✓</span>`, extra: d.location ? `(${d.location.x},${d.location.y},${d.location.z})` : '' };
-        case 'failed_creating_vent': return { text: `🕳 ${pChip(d.player)} Vent-Erstellung <span class="c-red">fehlgeschlagen</span>`, extra: d.location ? `(${d.location.x},${d.location.y},${d.location.z})` : '' };
+        case 'task_started': return { text: `▶ ${pChip(d.player)} starts <em class="t1">${escHtml(d.task?.replace(/_/g,' ')||'?')}</em>` };
+        case 'task_step_completed': return { text: `▶ ${pChip(d.player)} Step ${d.step} · <em>${escHtml(d.task?.replace(/_/g,' ')||'?')}</em>` };
+        case 'task_completed': return { text: `✅ ${pChip(d.player)} <span class="c-green">finished</span> <em>${escHtml(d.task?.replace(/_/g,' ')||'?')}</em>` };
+        case 'task_failed': return { text: `❌ ${pChip(d.player)} <span class="c-red">failed</span> <em>${escHtml(d.task?.replace(/_/g,' ')||'?')}</em>` };
+        case 'task_unassigned': return { text: `✕ ${pChip(d.player)} Task removed: <em>${escHtml(d.task?.replace(/_/g,' ')||'?')}</em>` };
+        case 'start_sabotage': return { text: `⚠ Sabotage: <strong style="color:#ff6600">${escHtml(d.sabotage?.replace(/_/g,' ')||'?')}</strong>`, extra: d.by ? `by ${pChip(d.by)}` : 'automatically' };
+        case 'end_sabotage': return { text: `Sabotage <strong>${escHtml(d.sabotage?.replace(/_/g,' ')||'?')}</strong> ${d.fixed ? '<span class="c-green">fixed ✓</span>' : '<span class="c-red">abandoned ✗</span>'}` };
+        case 'enter_vent': return { text: `🕳 ${pChip(d.player)} <span style="color:#22d3ee">Vent betreten</span>`, extra: d.location ? `(${d.location.x},${d.location.y},${d.location.z}) Group ${d.ventGroup}` : '' };
+        case 'exit_vent': return { text: `🕳 ${pChip(d.player)} Vent left`, extra: d.location ? `(${d.location.x},${d.location.y},${d.location.z})` : '' };
+        case 'switch_vent': return { text: `🕳 ${pChip(d.player)} Vent switched`, extra: d.from && d.to ? `(${d.from.x},${d.from.z}) → (${d.to.x},${d.to.z}) Group ${d.ventGroup}` : '' };
+        case 'start_creating_vent': return { text: `🕳 ${pChip(d.player)} <span class="c-orange">created Vent</span>`, extra: d.location ? `(${d.location.x},${d.location.y},${d.location.z}) Group ${d.ventGroup}` : '' };
+        case 'finish_creating_vent': return { text: `🕳 ${pChip(d.player)} Vent <span class="c-green">created ✓</span>`, extra: d.location ? `(${d.location.x},${d.location.y},${d.location.z})` : '' };
+        case 'failed_creating_vent': return { text: `🕳 ${pChip(d.player)} Vent creation <span class="c-red">failed</span>`, extra: d.location ? `(${d.location.x},${d.location.y},${d.location.z})` : '' };
         case 'join_camera': return { text: `📹 ${pChip(d.player)} <span style="color:#34d399">Kamera</span>: <strong>${escHtml(d.camera||'?')}</strong>` };
-        case 'switch_camera': return { text: `📹 ${pChip(d.player)} Kamera gewechselt`, extra: `${escHtml(d.old||'?')} → ${escHtml(d.new||'?')}` };
-        case 'leave_camera': return { text: `📹 ${pChip(d.player)} Kamera verlassen: <strong>${escHtml(d.camera||'?')}</strong>` };
-        case 'meeting_called': return { text: `📢 Meeting von ${pChip(d.caller)}`, extra: `${d.reason}${d.body ? ` · Leiche: ${pChip(d.body)}` : ''}` };
+        case 'switch_camera': return { text: `📹 ${pChip(d.player)} switched Camera`, extra: `${escHtml(d.old||'?')} → ${escHtml(d.new||'?')}` };
+        case 'leave_camera': return { text: `📹 ${pChip(d.player)} Camera left: <strong>${escHtml(d.camera||'?')}</strong>` };
+        case 'meeting_called': return { text: `📢 Meeting by ${pChip(d.caller)}`, extra: `${d.reason}${d.body ? ` · Body: ${pChip(d.body)}` : ''}` };
         case 'meeting_vote_for': return { text: `🗳 ${pChip(d.voter)} → ${pChip(d.target)}${d.mayorVote ? ' <span class="c-orange mono" style="font-size:.58rem;">MAYOR</span>' : ''}` };
         case 'meeting_vote_skip': return { text: `🗳 ${pChip(d.voter)} → <span class="t3">SKIP</span>${d.mayorVote ? ' <span class="c-orange mono" style="font-size:.58rem;">MAYOR</span>' : ''}` };
-        case 'meeting_result': return { text: `⚡ Meeting: ${d.ejected ? `${pChip(d.ejected)} <span class="c-red">rausgeworfen</span>` : '<span class="t3">kein Rauswurf</span>'}` };
+        case 'meeting_result': return { text: `⚡ Meeting: ${d.ejected ? `${pChip(d.ejected)} <span class="c-red">ejected</span>` : '<span class="t3">no ejecten</span>'}` };
         case 'settings_change': return { text: `⚙ <span class="c-accent">${escHtml(d.id||'?')}</span>`, extra: `<span class="c-red" style="text-decoration:line-through">${escHtml(d.old||'?')}</span> → <span class="c-green">${escHtml(d.new||'?')}</span>` };
         case 'player_chat': return { text: `💬 ${pChip(d.player)} <span class="t4">[${d.type||'?'}]</span>: <em class="t2">"${escHtml(d.message||'')}"</em>` };
-        case 'player_chat_failed': return { text: `🚫 ${pChip(d.player)} blockiert: <em class="t4">"${escHtml(d.message||'')}"</em>` };
-        case 'arsonist_douse': return { text: `🔥 ${pChip(d.arsonist)} <span style="color:#ff6600">übergoss</span> ${pChip(d.target)}` };
-        case 'camouflage_mode_activated': return { text: `🫥 ${pChip(d.player)} <span class="c-purple">Tarnung aktiviert</span>` };
-        case 'cannibal_eat_body': return { text: `🦴 ${pChip(d.cannibal)} <span class="c-red">konsumierte Körper</span>`, extra: d.body ? `Opfer: ${pChip(d.body)}` : '' };
-        case 'reveal_team': return { text: `🔮 ${pChip(d.seer)} <span class="c-purple">enthüllte</span> ${pChip(d.target)}s Team` };
-        case 'enter_ghost_form': return { text: `👻 ${pChip(d.player)} <span class="t3">Geisterform aktiviert</span>` };
-        case 'exit_ghost_form': return { text: `👻 ${pChip(d.player)} Geisterform beendet` };
-        case 'start_morph': return { text: `🎭 ${pChip(d.player)} <span class="c-purple">verwandelt</span> → ${pChip(d.target)}` };
-        case 'end_morph': return { text: `🎭 ${pChip(d.player)} Verwandlung beendet` };
-        case 'snitch_one_task_left': return { text: `🔔 ${pChip(d.player)} <span class="c-orange">Snitch: noch 1 Task</span>` };
-        case 'snitch_finished_tasks': return { text: `🔔 ${pChip(d.player)} <span class="c-green">Snitch: alle Tasks erledigt</span>` };
-        case 'executioner_target_selected': return { text: `⚖ ${pChip(d.player)} <span class="c-purple">Vollstrecker</span>`, extra: d.target ? `Ziel: ${pChip(d.target)}` : 'kein Ziel' };
+        case 'player_chat_failed': return { text: `🚫 ${pChip(d.player)} blocked: <em class="t4">"${escHtml(d.message||'')}"</em>` };
+        case 'arsonist_douse': return { text: `🔥 ${pChip(d.arsonist)} <span style="color:#ff6600">doused</span> ${pChip(d.target)}` };
+        case 'camouflage_mode_activated': return { text: `🫥 ${pChip(d.player)} <span class="c-purple">Camouflaged enabled</span>` };
+        case 'cannibal_eat_body': return { text: `🦴 ${pChip(d.cannibal)} <span class="c-red">eat body</span>`, extra: d.body ? `Opfer: ${pChip(d.body)}` : '' };
+        case 'reveal_team': return { text: `🔮 ${pChip(d.seer)} <span class="c-purple">revealed</span> ${pChip(d.target)}s Team` };
+        case 'enter_ghost_form': return { text: `👻 ${pChip(d.player)} <span class="t3">Ghostform activated</span>` };
+        case 'exit_ghost_form': return { text: `👻 ${pChip(d.player)} Ghostform ended` };
+        case 'start_morph': return { text: `🎭 ${pChip(d.player)} <span class="c-purple">morphed</span> → ${pChip(d.target)}` };
+        case 'end_morph': return { text: `🎭 ${pChip(d.player)} Morphing ended` };
+        case 'snitch_one_task_left': return { text: `🔔 ${pChip(d.player)} <span class="c-orange">Snitch: still 1 task</span>` };
+        case 'snitch_finished_tasks': return { text: `🔔 ${pChip(d.player)} <span class="c-green">Snitch: all tasks done</span>` };
+        case 'executioner_target_selected': return { text: `⚖ ${pChip(d.player)} <span class="c-purple">Executioner</span>`, extra: d.target ? `Target: ${pChip(d.target)}` : 'no target' };
         default: return { text: `<span class="t3">${escHtml(e.type.replace(/_/g,' '))}</span>` };
     }
 }
@@ -222,7 +222,7 @@ async function renderLog(data) {
     const allUuids = [...uuidSet];
 
     const pgEl = getEl('players-grid');
-    if (pgEl) pgEl.innerHTML = '<div class="loading-names">// Lade Spielernamen…</div>';
+    if (pgEl) pgEl.innerHTML = '<div class="loading-names">// Loading player names…</div>';
 
     log.filter(e => e.type === 'player_join').forEach(e => {
         const d = e.data || {};
@@ -326,8 +326,8 @@ async function renderLog(data) {
         banner.style.display = '';
         const isImpWin = isImposterRole(winner) || winner.toLowerCase().includes('impost');
         banner.className = 'winner-banner ' + (isImpWin ? 'imposters' : 'crewmates');
-        banner.innerHTML = `<div class="winner-title">${isImpWin ? '🔴' : '🔵'} ${escHtml(winner.toUpperCase())} GEWINNT</div>
-        <div class="winner-sub">${isImpWin ? 'IMPOSTOREN HABEN DIE CREW ELIMINIERT' : 'CREW HAT IHRE AUFGABEN ABGESCHLOSSEN'}</div>`;
+        banner.innerHTML = `<div class="winner-title">${isImpWin ? '🔴' : '🔵'} ${escHtml(winner.toUpperCase())} WINS</div>
+        <div class="winner-sub">${isImpWin ? 'IMPOSTOR HAVE ELIMINATED THE CREW' : 'CREW HAS COMPLETED THEIR TASKS'}</div>`;
     }
 
     const startEvt = log.find(e => e.type === 'game_start');
@@ -358,15 +358,15 @@ async function renderLog(data) {
     const douseCount = log.filter(e => e.type === 'arsonist_douse').length;
 
     const stats = [
-        { val: allUuids.length - botCount, lbl: 'Spieler', col: 'var(--accent)' },
+        { val: allUuids.length - botCount, lbl: 'Players', col: 'var(--accent)' },
         { val: botCount, lbl: 'Bots', col: 'var(--safe)' },
-        { val: murders, lbl: 'Morde', col: 'var(--danger)' },
+        { val: murders, lbl: 'Kills', col: 'var(--danger)' },
         { val: meetings, lbl: 'Meetings', col: 'var(--purple)' },
         { val: ejections, lbl: 'Ejections', col: 'var(--warn)' },
         { val: tasksDone, lbl: 'Tasks Done', col: 'var(--safe)' },
-        { val: sabotages, lbl: 'Sabotagen', col: '#ff6600' },
+        { val: sabotages, lbl: 'Sabotages', col: '#ff6600' },
         { val: ventsUsed, lbl: 'Vent-Uses', col: '#22d3ee' },
-        { val: chatCount, lbl: 'Nachrichten', col: 'var(--t2)' },
+        { val: chatCount, lbl: 'Messages', col: 'var(--t2)' },
     ];
     if (morphCount > 0) stats.push({ val: morphCount, lbl: 'Morphs', col: 'var(--pink)' });
     if (douseCount > 0) stats.push({ val: douseCount, lbl: 'Douses', col: '#ff6600' });
@@ -436,13 +436,13 @@ function buildPlayers(allUuids, players, log, createdAt) {
         const card = document.createElement('div');
         card.className = `player-card ${roleClass} ${deadClass} ${botClass}`.trim();
         card.dataset.playerCard = uuid;
-        card.title = 'Klicken für Details';
+        card.title = 'Click for details';
         card.innerHTML = `
       <div class="player-avatar"><img src="${getAvatarUrl(uuid)}" alt="" onerror="this.style.display='none'"></div>
       <div style="flex:1;min-width:0;">
-        <div class="player-name">${escHtml(playerLabel(uuid))}${p.wasHost ? ` <span style="color:var(--warn);font-size:.6rem;" title="War Host">★</span>` : ''}${p.isBot ? ` <span style="color:var(--safe);font-size:.58rem;" title="Bot">🤖</span>` : ''}</div>
+        <div class="player-name">${escHtml(playerLabel(uuid))}${p.wasHost ? ` <span style="color:var(--warn);font-size:.6rem;" title="Was Host">★</span>` : ''}${p.isBot ? ` <span style="color:var(--safe);font-size:.58rem;" title="Bot">🤖</span>` : ''}</div>
         <div class="player-uuid-short" title="${uuid}">${shortUuid(uuid)}</div>
-        <span class="role-badge ${rbClass}">${p.isBot ? 'BOT · ' : ''}${escHtml(p.role || 'unbekannt')}</span>
+        <span class="role-badge ${rbClass}">${escHtml(p.role || 'unknown')}</span>
         ${deathLine}
         ${p.tasks.assigned.size > 0 ? `<div style="margin-top:4px;"><div class="mono t4" style="font-size:.54rem;">TASKS ${p.tasks.completed.size}/${p.tasks.assigned.size}</div><div class="task-bar"><div class="task-bar-fill" style="width:${pct}%"></div></div></div>` : ''}
         ${miniStats.length > 0 ? `<div class="player-stats-row">${miniStats.join(' ')}</div>` : ''}
@@ -453,7 +453,7 @@ function buildPlayers(allUuids, players, log, createdAt) {
 
     const pfSelect = getEl('pf-select');
     if (pfSelect) {
-        pfSelect.innerHTML = `<option value="">Alle Spieler</option>` +
+        pfSelect.innerHTML = `<option value="">All players</option>` +
             allUuids.map(u => {
                 const bot = players[u].isBot ? ' 🤖' : '';
                 return `<option value="${u}">${escHtml(playerLabel(u))}${bot}</option>`;
@@ -529,7 +529,7 @@ function buildTaskProgress(log) {
     const totalPct = allAssigned.size > 0 ? Math.round(allDone.size / allAssigned.size * 100) : 0;
     setHTML('task-progress', `
     <div style="display:flex;justify-content:space-between;margin-bottom:4px;" class="mono">
-      <span class="t3" style="font-size:.6rem;">GESAMT</span><span class="c-green" style="font-size:.6rem;">${allDone.size}/${allAssigned.size} (${totalPct}%)</span>
+      <span class="t3" style="font-size:.6rem;">TOTAL <span class="c-green" style="font-size:.6rem;">${allDone.size}/${allAssigned.size} (${totalPct}%)</span>
     </div>
     <div class="task-bar" style="height:7px;margin-bottom:8px;"><div class="task-bar-fill" style="width:${totalPct}%"></div></div>
     <div>${[...allAssigned].sort().map(task => {
@@ -551,7 +551,7 @@ function buildVentSection(log, createdAt) {
     const ventDiv = getEl('vent-section');
     if (!ventDiv) return;
     if (Object.keys(ventSessions).length === 0) {
-        ventDiv.innerHTML = `<div class="empty-state">Keine Vent-Aktivität</div>`;
+        ventDiv.innerHTML = `<div class="empty-state">No vent activity</div>`;
     } else {
         ventDiv.innerHTML = Object.entries(ventSessions).map(([uuid, evts]) => {
             const enters = evts.filter(e => e.type === 'enter_vent').length;
@@ -568,9 +568,9 @@ function buildVentSection(log, createdAt) {
                 if (ev.type === 'enter_vent') return `<div class="vent-line">↘ ${fmtRelative(ev.timestamp, createdAt)} (${d.location?.x},${d.location?.z}) g${d.ventGroup}</div>`;
                 if (ev.type === 'switch_vent') return `<div class="vent-line">⇄ (${d.from?.x},${d.from?.z})→(${d.to?.x},${d.to?.z})</div>`;
                 if (ev.type === 'exit_vent') return `<div class="vent-line">↗ ${fmtRelative(ev.timestamp, createdAt)} (${d.location?.x},${d.location?.z})</div>`;
-                if (ev.type === 'start_creating_vent') return `<div class="vent-line" style="color:var(--warn);">🔨 erstellt… (${d.location?.x},${d.location?.z})</div>`;
-                if (ev.type === 'finish_creating_vent') return `<div class="vent-line" style="color:var(--safe);">🔨 fertig (${d.location?.x},${d.location?.z})</div>`;
-                if (ev.type === 'failed_creating_vent') return `<div class="vent-line" style="color:var(--danger);">🔨 fehlgeschlagen</div>`;
+                if (ev.type === 'start_creating_vent') return `<div class="vent-line" style="color:var(--warn);">🔨 created… (${d.location?.x},${d.location?.z})</div>`;
+                if (ev.type === 'finish_creating_vent') return `<div class="vent-line" style="color:var(--safe);">🔨 finished (${d.location?.x},${d.location?.z})</div>`;
+                if (ev.type === 'failed_creating_vent') return `<div class="vent-line" style="color:var(--danger);">🔨 failed</div>`;
                 return '';
             }).join('')}
         ${evts.length > 10 ? `<div class="vent-line t4">…+${evts.length-10} weitere</div>` : ''}
@@ -626,7 +626,7 @@ function buildMeetings(log, players, createdAt) {
     const meetingCalls = log.filter(e => e.type === 'meeting_called');
     const meetingsDiv = getEl('meetings-section');
     if (!meetingsDiv) return;
-    if (meetingCalls.length === 0) { meetingsDiv.innerHTML = `<div class="empty-state">Keine Meetings abgehalten</div>`; return; }
+    if (meetingCalls.length === 0) { meetingsDiv.innerHTML = `<div class="empty-state">No meetings held</div>`; return; }
     meetingsDiv.innerHTML = meetingCalls.map((mc, i) => {
         const d = mc.data || {};
         const nextM = meetingCalls[i+1];
@@ -638,12 +638,12 @@ function buildMeetings(log, players, createdAt) {
         return `<div class="meeting-card" data-meeting-idx="${i}">
       <div class="meeting-no">MTG #${i+1} · ${d.reason || '?'} · ${fmtRelative(mc.timestamp, createdAt)}</div>
       <div style="font-size:.76rem;margin-bottom:4px;">
-        ${d.reason === 'BODY' ? `🔴 ${pChip(d.caller)} meldete Leiche` : `🔵 ${pChip(d.caller)} Notfall`}
-        ${d.body ? ` · Opfer: ${pChip(d.body)}` : ''}
+        ${d.reason === 'BODY' ? `🔴 ${pChip(d.caller)} reported body` : `🔵 ${pChip(d.caller)} Emergency Meeting`}
+        ${d.body ? ` · Victim: ${pChip(d.body)}` : ''}
       </div>
-      ${votes.length > 0 ? `<div style="margin-bottom:4px;">${votes.slice(0,4).map(v => `<div class="vote-row">${pChip(v.data.voter)} <span class="vote-arrow">→</span> ${v.type === 'meeting_vote_skip' ? '<span class="t3">SKIP</span>' : pChip(v.data.target)}${v.data.mayorVote ? '<span class="c-orange mono" style="font-size:.55rem;margin-left:2px;">M</span>' : ''}</div>`).join('')}${votes.length > 4 ? `<div class="mono t4" style="font-size:.58rem;">+${votes.length-4} weitere</div>` : ''}</div>` : ''}
+      ${votes.length > 0 ? `<div style="margin-bottom:4px;">${votes.slice(0,4).map(v => `<div class="vote-row">${pChip(v.data.voter)} <span class="vote-arrow">→</span> ${v.type === 'meeting_vote_skip' ? '<span class="t3">SKIP</span>' : pChip(v.data.target)}${v.data.mayorVote ? '<span class="c-orange mono" style="font-size:.55rem;margin-left:2px;">M</span>' : ''}</div>`).join('')}${votes.length > 4 ? `<div class="mono t4" style="font-size:.58rem;">+${votes.length-4} more</div>` : ''}</div>` : ''}
       ${result ? `<div style="padding-top:4px;border-top:1px solid var(--border);font-size:.72rem;">
-        ${ejected ? `<span class="c-red">⚡ ${pChip(ejected)} rausgeworfen</span> <span class="mono t4" style="font-size:.56rem;">${wasImp ? '✓ Imp' : '✗ Crew'}</span>` : `<span class="t3">∅ Kein Rauswurf</span>`}
+        ${ejected ? `<span class="c-red">⚡ ${pChip(ejected)} ejected</span> <span class="mono t4" style="font-size:.56rem;">${wasImp ? '✓ Imp' : '✗ Crew'}</span>` : `<span class="t3">∅ No Ejection</span>`}
       </div>` : ''}
     </div>`;
     }).join('');
@@ -654,70 +654,70 @@ function buildInsights(players, log, createdAt, startEvt) {
     const ins = [];
 
     const impostors = allUuids.filter(u => isImposterRole(players[u].role));
-    if (impostors.length > 0) ins.push({ type:'danger', text:`🔴 Impostoren (${impostors.length}): ${impostors.map(u => `<strong class="c-red">${escHtml(playerLabel(u))}</strong>`).join(', ')}` });
+    if (impostors.length > 0) ins.push({ type:'danger', text:`🔴 Imposters (${impostors.length}): ${impostors.map(u => `<strong class="c-red">${escHtml(playerLabel(u))}</strong>`).join(', ')}` });
 
     const bots = allUuids.filter(u => players[u].isBot);
-    if (bots.length > 0) ins.push({ type:'info', text:`🤖 Bots (${bots.length}): ${bots.map(u => pChip(u)).join(' ')}` });
+    if (bots.length > 0) ins.push({ type:'info', text:`🤖 Bots (${bots.length}): ${bots.map(u => pChip(u)).join(', ')}` });
 
     log.filter(e => e.type === 'player_death' && typeof e.data?.reason === 'object' && e.data.reason.type === 'murdered').forEach(e => {
-        ins.push({ type:'murder', text:`⚔ ${pChip(e.data.reason.killer)} mordete ${pChip(e.data.player)} <span class="mono t4" style="font-size:.6rem;">@ ${fmtRelative(e.timestamp, createdAt)}</span>` });
+        ins.push({ type:'murder', text:`⚔ ${pChip(e.data.reason.killer)} killed ${pChip(e.data.player)} <span class="mono t4" style="font-size:.6rem;">@ ${fmtRelative(e.timestamp, createdAt)}</span>` });
     });
 
     const firstKill = log.find(e => e.type === 'player_death' && typeof e.data?.reason === 'object');
-    if (firstKill && startEvt) ins.push({ type:'warn', text:`⏱ Erster Mord <strong>${fmtDuration(new Date(firstKill.timestamp) - new Date(startEvt.timestamp))}</strong> nach Spielstart` });
+    if (firstKill && startEvt) ins.push({ type:'warn', text:`⏱ First Death <strong>${fmtDuration(new Date(firstKill.timestamp) - new Date(startEvt.timestamp))}</strong> after game start` });
 
     impostors.forEach(imp => {
         const kills = log.filter(e => e.type === 'player_death' && typeof e.data?.reason === 'object' && e.data.reason.killer === imp);
         if (kills.length > 1) {
             const gaps = kills.slice(1).map((k,i) => new Date(k.timestamp) - new Date(kills[i].timestamp));
-            ins.push({ type:'danger', text:`⚔ ${pChip(imp)} tötete ${kills.length}× · Ø ${fmtDuration(gaps.reduce((a,b) => a+b,0)/gaps.length)} zwischen Kills` });
+            ins.push({ type:'danger', text:`⚔ ${pChip(imp)} killed ${kills.length}× · Ø ${fmtDuration(gaps.reduce((a,b) => a+b,0)/gaps.length)} between kills` });
         }
     });
 
     log.filter(e => e.type === 'meeting_result' && e.data?.ejected).forEach(e => {
         const ej = e.data.ejected, wasImp = isImposterRole(players[ej]?.role);
-        ins.push({ type: wasImp ? 'success' : 'warn', text: wasImp ? `✅ ${pChip(ej)} korrekt rausgeworfen (Impostor)` : `❌ ${pChip(ej)} fälschlicherweise rausgeworfen (${players[ej]?.role || 'Crew'})` });
+        ins.push({ type: wasImp ? 'success' : 'warn', text: wasImp ? `✅ ${pChip(ej)} ejected correctly (Impostor)` : `❌ ${pChip(ej)} wrongly ejected (${players[ej]?.role || 'Crew'})` });
     });
 
-    log.filter(e => e.type === 'meeting_result' && !e.data?.ejected).forEach(() => ins.push({ type:'neutral', text:`🤷 Meeting endete ohne Rauswurf` }));
+    log.filter(e => e.type === 'meeting_result' && !e.data?.ejected).forEach(() => ins.push({ type:'neutral', text:`🤷 Meeting ended without dismissal` }));
 
     log.filter(e => e.type === 'start_sabotage').forEach(s => {
         const end = log.find(e => e.type === 'end_sabotage' && e.data?.sabotage === s.data?.sabotage && new Date(e.timestamp) > new Date(s.timestamp));
-        if (end) ins.push({ type: end.data.fixed ? 'info' : 'warn', text: end.data.fixed ? `🔧 <strong>${escHtml(s.data?.sabotage?.replace(/_/g,' '))}</strong> repariert in ${fmtDuration(new Date(end.timestamp) - new Date(s.timestamp))}` : `💥 <strong>${escHtml(s.data?.sabotage?.replace(/_/g,' '))}</strong> abgelaufen nach ${fmtDuration(new Date(end.timestamp) - new Date(s.timestamp))}` });
+        if (end) ins.push({ type: end.data.fixed ? 'info' : 'warn', text: end.data.fixed ? `🔧 <strong>${escHtml(s.data?.sabotage?.replace(/_/g,' '))}</strong> fixed in ${fmtDuration(new Date(end.timestamp) - new Date(s.timestamp))}` : `💥 <strong>${escHtml(s.data?.sabotage?.replace(/_/g,' '))}</strong> expired after ${fmtDuration(new Date(end.timestamp) - new Date(s.timestamp))}` });
     });
 
     const ventCounts = {};
     log.filter(e => e.type === 'enter_vent').forEach(e => { ventCounts[e.data.player] = (ventCounts[e.data.player]||0)+1; });
-    Object.entries(ventCounts).forEach(([u,c]) => { if(c >= 2) ins.push({ type:'warn', text:`🕳 ${pChip(u)} benutzte Vents <strong>${c}×</strong>` }); });
+    Object.entries(ventCounts).forEach(([u,c]) => { if(c >= 2) ins.push({ type:'warn', text:`🕳 ${pChip(u)} used vents <strong>${c}×</strong>` }); });
 
     const arsonists = allUuids.filter(u => players[u].dousedTargets.length > 0);
-    arsonists.forEach(u => ins.push({ type:'danger', text:`🔥 ${pChip(u)} übergoss ${players[u].dousedTargets.length} Ziele: ${players[u].dousedTargets.map(t => pChip(t)).join(' ')}` }));
+    arsonists.forEach(u => ins.push({ type:'danger', text:`🔥 ${pChip(u)} doused ${players[u].dousedTargets.length} targets: ${players[u].dousedTargets.map(t => pChip(t)).join(' ')}` }));
 
     const executioners = allUuids.filter(u => players[u].executionerTarget);
-    executioners.forEach(u => ins.push({ type:'neutral', text:`⚖ ${pChip(u)} (Vollstrecker) Ziel: ${pChip(players[u].executionerTarget)}` }));
+    executioners.forEach(u => ins.push({ type:'neutral', text:`⚖ ${pChip(u)} (Executioner) target: ${pChip(players[u].executionerTarget)}` }));
 
     const snitches = allUuids.filter(u => players[u].snitchFinished);
-    snitches.forEach(u => ins.push({ type:'info', text:`🔔 ${pChip(u)} (Snitch) hat alle Tasks abgeschlossen` }));
+    snitches.forEach(u => ins.push({ type:'info', text:`🔔 ${pChip(u)} (Snitch) completed all tasks` }));
 
     const disconnected = allUuids.filter(u => players[u].disconnects > 0);
-    disconnected.forEach(u => ins.push({ type:'neutral', text:`⚡ ${pChip(u)} trennte die Verbindung ${players[u].disconnects}×` }));
+    disconnected.forEach(u => ins.push({ type:'neutral', text:`⚡ ${pChip(u)} disconnected ${players[u].disconnects}×` }));
 
     const survivors = allUuids.filter(u => !players[u].dead);
-    if (survivors.length > 0) ins.push({ type:'success', text:`🛡 Überlebende (${survivors.length}): ${survivors.map(u => pChip(u)).join(' ')}` });
+    if (survivors.length > 0) ins.push({ type:'success', text:`🛡 Survivors (${survivors.length}): ${survivors.map(u => pChip(u)).join(' ')}` });
 
     const startEvtObj = log.find(e => e.type === 'game_start'), endEvtObj = log.find(e => e.type === 'game_end');
-    if (startEvtObj && endEvtObj) ins.push({ type:'info', text:`⏱ Spieldauer: <strong>${fmtDuration(new Date(endEvtObj.timestamp) - new Date(startEvtObj.timestamp))}</strong>` });
+    if (startEvtObj && endEvtObj) ins.push({ type:'info', text:`⏱ Game duration: <strong>${fmtDuration(new Date(endEvtObj.timestamp) - new Date(startEvtObj.timestamp))}</strong>` });
 
     setHTML('insights-section', ins.length
         ? ins.map(i => `<div class="insight-item ${i.type}">${i.text}</div>`).join('')
-        : `<div class="empty-state">Keine Erkenntnisse</div>`);
+        : `<div class="empty-state">No insights</div>`);
 }
 
 function buildChat(log, createdAt) {
     const chatEvts = log.filter(e => e.type === 'player_chat' || e.type === 'player_chat_failed');
     const chatDiv = getEl('chat-section');
     if (!chatDiv) return;
-    if (chatEvts.length === 0) { chatDiv.innerHTML = `<div class="empty-state">Keine Nachrichten</div>`; return; }
+    if (chatEvts.length === 0) { chatDiv.innerHTML = `<div class="empty-state">No messages</div>`; return; }
     chatDiv.innerHTML = chatEvts.map(e => {
         const isFailed = e.type === 'player_chat_failed';
         const t = e.data?.type || (isFailed ? 'failed' : '');
@@ -730,7 +730,7 @@ function buildChat(log, createdAt) {
           ${t ? `<span class="ct-badge ${badgeCls}">${t.toUpperCase()}</span>` : ''}
           <span class="chat-time" style="margin-left:auto;">${fmtRelative(e.timestamp, createdAt)}</span>
         </div>
-        <div class="chat-text">${isFailed ? '<span class="t4">[blockiert] </span>' : ''}${escHtml(e.data?.message || '')}</div>
+        <div class="chat-text">${isFailed ? '<span class="t4">[blocked] </span>' : ''}${escHtml(e.data?.message || '')}</div>
       </div>
     </div>`;
     }).join('');
@@ -885,7 +885,7 @@ function renderTimeline() {
     setHTML('tl-count', `${filtered.length} / ${G.log.length} Events`);
     tl.innerHTML = '';
 
-    if (filtered.length === 0) { tl.innerHTML = `<div class="empty-state">Keine Events gefunden</div>`; return; }
+    if (filtered.length === 0) { tl.innerHTML = `<div class="empty-state">No events found</div>`; return; }
 
     const BATCH = 200;
     const frag = document.createDocumentFragment();
@@ -922,7 +922,7 @@ function renderTimeline() {
         more.className = 'empty-state';
         more.style.textAlign = 'center';
         more.style.padding = '.8rem';
-        more.innerHTML = `<span>…weitere ${filtered.length - BATCH} Events — Filter verfeinern um mehr anzuzeigen</span>`;
+        more.innerHTML = `<span>…more ${filtered.length - BATCH} events — refine filters to show more</span>`;
         tl.appendChild(more);
     }
 }
@@ -955,7 +955,7 @@ function openPlayerModal(uuid) {
         <div class="modal-name" style="color:${isImp ? 'var(--danger)' : 'var(--t1)'}">${escHtml(playerLabel(uuid))}${p.isBot ? ' <span style="color:var(--safe);font-size:.8rem;">🤖 BOT</span>' : ''}</div>
         <div class="modal-uuid">${uuid}</div>
         <div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:4px;">
-          <span class="role-badge ${isImp ? 'rb-imp' : (p.role ? 'rb-crew' : (p.isBot ? 'rb-bot' : 'rb-other'))}">${escHtml(p.role || 'unbekannt')}</span>
+          <span class="role-badge ${isImp ? 'rb-imp' : (p.role ? 'rb-crew' : (p.isBot ? 'rb-bot' : 'rb-other'))}">${escHtml(p.role || 'unknown')}</span>
           ${p.wasHost ? `<span class="role-badge" style="background:rgba(255,170,0,.14);color:var(--warn);border:1px solid rgba(255,170,0,.3);">HOST</span>` : ''}
           ${p.dead ? `<span class="role-badge" style="background:rgba(255,40,72,.14);color:var(--danger);border:1px solid rgba(255,40,72,.3);">DEAD</span>` : `<span class="role-badge" style="background:rgba(0,230,118,.12);color:var(--safe);border:1px solid rgba(0,230,118,.25);">ALIVE</span>`}
           ${p.modifications.map(m => `<span class="role-badge rb-other">${escHtml(m)}</span>`).join('')}
@@ -987,7 +987,7 @@ function openPlayerModal(uuid) {
       </div>
 
       ${p.tasks.assigned.size > 0 ? `
-        <div class="modal-section">Task-Fortschritt</div>
+        <div class="modal-section">Task-Progress</div>
         <div style="display:flex;justify-content:space-between;" class="mono" style="font-size:.62rem;">
           <span class="t3">PROGRESS</span><span class="c-green">${p.tasks.completed.size}/${p.tasks.assigned.size} (${pct}%)</span>
         </div>
@@ -999,11 +999,11 @@ function openPlayerModal(uuid) {
       ` : ''}
 
       ${p.dead ? `
-        <div class="modal-section">Tod</div>
+        <div class="modal-section">Dead</div>
         <div style="font-size:.8rem;color:var(--t2);">
           ${p.deadReason === 'murdered' && p.killer
-        ? `⚔ Ermordet von ${pChip(p.killer)}${timeAlive ? ` · überlebte <strong>${timeAlive}</strong>` : ''}`
-        : `Ursache: <strong>${p.deadReason || 'unbekannt'}</strong>${timeAlive ? ` · überlebte <strong>${timeAlive}</strong>` : ''}`}
+        ? `⚔ Killed by ${pChip(p.killer)}${timeAlive ? ` · survived <strong>${timeAlive}</strong>` : ''}`
+        : `Cause: <strong>${p.deadReason || 'unknown'}</strong>${timeAlive ? ` · survived <strong>${timeAlive}</strong>` : ''}`}
         </div>` : ''}
 
       ${myKills.length > 0 ? `
@@ -1014,12 +1014,12 @@ function openPlayerModal(uuid) {
       ` : ''}
 
       ${p.dousedTargets.length > 0 ? `
-        <div class="modal-section">Übergossene Ziele 🔥 (${p.dousedTargets.length})</div>
+        <div class="modal-section">Doused Targets 🔥 (${p.dousedTargets.length})</div>
         <div style="display:flex;flex-wrap:wrap;gap:4px;">${p.dousedTargets.map(t => pChip(t)).join('')}</div>
       ` : ''}
 
       ${p.executionerTarget ? `
-        <div class="modal-section">Vollstrecker-Ziel ⚖</div>
+        <div class="modal-section">Executioner Target ⚖</div>
         <div>${pChip(p.executionerTarget)}</div>
       ` : ''}
 
@@ -1029,7 +1029,7 @@ function openPlayerModal(uuid) {
       ` : ''}
 
       ${myAbilities.length > 0 ? `
-        <div class="modal-section">Sonderfähigkeiten (${myAbilities.length})</div>
+        <div class="modal-section">Special abilities (${myAbilities.length})</div>
         <div>${myAbilities.map(e => {
         const desc = describeEvent(e);
         return `<div style="font-size:.76rem;padding:2px 0;color:var(--t2);">${desc.text} <span class="mono t3" style="font-size:.58rem;">${fmtRelative(e.timestamp, createdAt)}</span></div>`;
@@ -1052,7 +1052,7 @@ function openPlayerModal(uuid) {
     }).join('')}</div>
       ` : ''}
 
-      <div class="modal-section">Alle Events (${myEvents.length})</div>
+      <div class="modal-section">All events (${myEvents.length})</div>
       <div class="scroll-panel" style="max-height:260px;">
         ${myEvents.slice(0, 80).map(e => {
         const cat = getCat(e.type); const desc = describeEvent(e);
@@ -1068,12 +1068,12 @@ function openPlayerModal(uuid) {
             </div>
           </div>`;
     }).join('')}
-        ${myEvents.length > 80 ? `<div class="empty-state">+${myEvents.length-80} weitere Events…</div>` : ''}
+        ${myEvents.length > 80 ? `<div class="empty-state">+${myEvents.length-80} more events…</div>` : ''}
       </div>
 
       <div style="margin-top:.85rem;padding-top:.75rem;border-top:1px solid var(--border);">
         <button onclick="filterToPlayer('${uuid}');closePlayerModal();" style="width:100%;background:rgba(0,200,255,.07);border:1px solid rgba(0,200,255,.25);color:var(--accent);border-radius:var(--r-sm);padding:.42rem .7rem;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.06em;transition:all .12s;">
-          ⌕ TIMELINE AUF DIESEN SPIELER FILTERN
+          ⌕ FILTER TIMELINE TO THIS PLAYER
         </button>
       </div>
     </div>`;
@@ -1114,17 +1114,17 @@ function openMeetingDetail(idx) {
       <button onclick="closeEvtdModal()" class="modal-close">✕</button>
     </div>
     <div class="evtd-body">
-      <div class="evtd-row"><div class="evtd-key">Aufgerufen von</div><div class="evtd-val">${pChip(mc.data?.caller)}</div></div>
-      <div class="evtd-row"><div class="evtd-key">Grund</div><div class="evtd-val">${mc.data?.reason}</div></div>
-      ${mc.data?.body ? `<div class="evtd-row"><div class="evtd-key">Leiche</div><div class="evtd-val">${pChip(mc.data.body)}</div></div>` : ''}
-      <div class="evtd-row"><div class="evtd-key">Zeitpunkt</div><div class="evtd-val">${fmtRelative(mc.timestamp, G.createdAt)}</div></div>
-      ${discS && voteS ? `<div class="evtd-row"><div class="evtd-key">Diskussion</div><div class="evtd-val">${fmtDuration(new Date(voteS.timestamp)-new Date(discS.timestamp))}</div></div>` : ''}
+      <div class="evtd-row"><div class="evtd-key">Called by</div><div class="evtd-val">${pChip(mc.data?.caller)}</div></div>
+      <div class="evtd-row"><div class="evtd-key">Reason</div><div class="evtd-val">${mc.data?.reason}</div></div>
+      ${mc.data?.body ? `<div class="evtd-row"><div class="evtd-key">Body</div><div class="evtd-val">${pChip(mc.data.body)}</div></div>` : ''}
+      <div class="evtd-row"><div class="evtd-key">Timestamp</div><div class="evtd-val">${fmtRelative(mc.timestamp, G.createdAt)}</div></div>
+      ${discS && voteS ? `<div class="evtd-row"><div class="evtd-key">Discussion</div><div class="evtd-val">${fmtDuration(new Date(voteS.timestamp)-new Date(discS.timestamp))}</div></div>` : ''}
       ${voteS && endS ? `<div class="evtd-row"><div class="evtd-key">Voting</div><div class="evtd-val">${fmtDuration(new Date(endS.timestamp)-new Date(voteS.timestamp))}</div></div>` : ''}
-      ${topVoted.length > 0 ? `<div class="evtd-row" style="flex-direction:column;align-items:flex-start;gap:3px;"><div class="evtd-key">Stimmverteilung</div><div>${topVoted.map(([t,c]) => `<div class="vote-row">${pChip(t)} <span class="mono t2" style="font-size:.7rem;margin-left:4px;">${c} Stimme${c!==1?'n':''}</span></div>`).join('')}</div></div>` : ''}
+      ${topVoted.length > 0 ? `<div class="evtd-row" style="flex-direction:column;align-items:flex-start;gap:3px;"><div class="evtd-key">Vote distribution</div><div>${topVoted.map(([t,c]) => `<div class="vote-row">${pChip(t)} <span class="mono t2" style="font-size:.7rem;margin-left:4px;">${c} Stimme${c!==1?'n':''}</span></div>`).join('')}</div></div>` : ''}
       ${skipVotes > 0 ? `<div class="evtd-row"><div class="evtd-key">Skips</div><div class="evtd-val">${skipVotes}</div></div>` : ''}
-      ${votes.length > 0 ? `<div class="evtd-row" style="flex-direction:column;align-items:flex-start;gap:3px;"><div class="evtd-key">Alle Votes (${votes.length})</div><div>${votes.map(v => `<div class="vote-row">${pChip(v.data.voter)} <span class="vote-arrow">→</span> ${v.type === 'meeting_vote_skip' ? '<span class="t3">SKIP</span>' : pChip(v.data.target)}${v.data.mayorVote ? ' <span class="mono c-orange" style="font-size:.56rem;">MAYOR</span>' : ''}</div>`).join('')}</div></div>` : ''}
+      ${votes.length > 0 ? `<div class="evtd-row" style="flex-direction:column;align-items:flex-start;gap:3px;"><div class="evtd-key">All votes (${votes.length})</div><div>${votes.map(v => `<div class="vote-row">${pChip(v.data.voter)} <span class="vote-arrow">→</span> ${v.type === 'meeting_vote_skip' ? '<span class="t3">SKIP</span>' : pChip(v.data.target)}${v.data.mayorVote ? ' <span class="mono c-orange" style="font-size:.56rem;">MAYOR</span>' : ''}</div>`).join('')}</div></div>` : ''}
       ${chatInM.length > 0 ? `<div class="evtd-row" style="flex-direction:column;align-items:flex-start;gap:3px;"><div class="evtd-key">Chat (${chatInM.length})</div><div>${chatInM.map(c => `<div style="font-size:.74rem;color:var(--t2);padding:1px 0;">${pAv(c.data.player,13)} <span class="t3">${escHtml(playerLabel(c.data.player))}:</span> ${escHtml(c.data.message||'')}</div>`).join('')}</div></div>` : ''}
-      ${result ? `<div class="evtd-row"><div class="evtd-key">Ergebnis</div><div class="evtd-val">${result.data.ejected ? `${pChip(result.data.ejected)} rausgeworfen` : '<span class="t3">Kein Rauswurf</span>'}</div></div>` : ''}
+      ${result ? `<div class="evtd-row"><div class="evtd-key">Events</div><div class="evtd-val">${result.data.ejected ? `${pChip(result.data.ejected)} rausgeworfen` : '<span class="t3">Kein Rauswurf</span>'}</div></div>` : ''}
     </div>`;
     overlay.classList.add('open');
 }
