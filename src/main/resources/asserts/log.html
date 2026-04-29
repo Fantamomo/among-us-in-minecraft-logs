@@ -194,9 +194,33 @@
     }
 
     async function boot() {
-        const code = window.__LOG_CODE__;
+        let code = window.__LOG_CODE__; // could be injected by server, if not, we will try to obtain it via other means (headers, url)
         const setLoad = t => { document.getElementById('load-text').textContent = t; };
         const fillBar = p => { document.getElementById('load-bar-fill').style.width = p + '%'; };
+
+        if (code === undefined) {
+            setLoad("Requesting log identifier...");
+            fillBar(10);
+            const response = await fetch(window.location.toString(), {
+                method: 'HEAD',
+            });
+            const headers = response.headers;
+            if (headers.has("auiml-log-code")) {
+                code = headers.get("auiml-log-code");
+            }
+        }
+
+        if (code === undefined) { // last resort, try to get by url
+            setLoad("Extracting log identifier from URL...");
+            const url = window.location.pathname;
+            const extractedCode = url.substring(url.lastIndexOf('/') + 1);
+            if (extractedCode.length === 8 && /^[a-zA-Z0-9]+$/.test(extractedCode)) {
+                code = extractedCode;
+            } else {
+                showError('Log id not found', 'We could not determine the log identifier. Please ensure your are connected to a server');
+                return;
+            }
+        }
 
         if (code === 'local') {
             setLoad('Local data is loading...');
