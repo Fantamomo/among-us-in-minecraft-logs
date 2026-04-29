@@ -3,6 +3,8 @@
 This repository contains the **KTor server** for storing and serving **ActionLogs** created by
 the [Among Us in Minecraft](https://github.com/Fantamomo/among-us-in-minecraft) plugin.
 
+More information about Actions Logs: [Action Log Documentation](https://docs.among-us-in-minecraft.fantamomo.com/misc/action-log/)
+
 ---
 
 ## This repository is under construction.
@@ -18,7 +20,6 @@ the [Among Us in Minecraft](https://github.com/Fantamomo/among-us-in-minecraft) 
 * **Web Interface:** Players can view detailed game information directly in the browser.
 * **Download Option:** Logs can be downloaded as JSON for offline analysis.
 * **Automatic Indexing:** Logs are automatically stored and linked once uploaded.
-* **Only one hour:** The logs are stored for one hour before being deleted.
 
 ---
 
@@ -26,11 +27,25 @@ the [Among Us in Minecraft](https://github.com/Fantamomo/among-us-in-minecraft) 
 
 1. **Log Generation:** The Among Us in Minecraft plugin creates an ActionLog and add any relevant information.
 2. **Upload to Server:** After the game, the plugin uploads the log to this Node.js server.
-3. **Server Processing:** The server stores the log and assigns a **unique 16-character code**.
+3. **Server Processing:** The server stores the log and assigns a **unique 8-character code**.
 4. **Player Access:**
   * **Web Interface:** `http://<server>/log/<code>` — shows a detailed replay of the game with all actions, tasks,
     votes, and chat.
   * **Download JSON:** `http://<server>/raw/<code>` — allows the player to download the raw JSON file.
+
+---
+
+## Repositories
+
+This Among Us Plugin is split into multiple repositories:
+
+- The plugin itself: [https://github.com/Fantamomo/among-us-in-minecraft](https://github.com/Fantamomo/among-us-in-minecraft)
+- The documentation: [https://github.com/Fantamomo/among-us-in-minecraft-docs](https://github.com/Fantamomo/among-us-in-minecraft-docs)
+- The action log server: this repository
+
+---
+
+The action log server is licensed unter the [Apache 2.0 License](LICENSE)
 
 ---
 
