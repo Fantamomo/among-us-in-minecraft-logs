@@ -254,6 +254,41 @@ body {
 .winner-title { font-family: 'Rajdhani', sans-serif; font-size: clamp(1.5rem, 4vw, 2.5rem); font-weight: 700; letter-spacing: .25em; color: var(--t1); position: relative; }
 .winner-sub { font-family: 'JetBrains Mono', monospace; font-size: .62rem; letter-spacing: .2em; color: var(--t3); margin-top: .3rem; position: relative; }
 
+.ai-short-summary {
+    padding: .55rem .7rem;
+    background: rgba(0, 200, 255, .06);
+    border: 1px solid rgba(0, 200, 255, .18);
+    border-radius: var(--r-sm);
+}
+
+details summary::-webkit-details-marker { display: none; }
+details summary::before { content: '▶ '; font-size: .6rem; }
+details[open] summary::before { content: '▼ '; }
+
+.ai-disclaimer {
+    display: flex;
+    align-items: flex-start;
+    gap: .6rem;
+    padding: .5rem .7rem;
+    margin-bottom: .75rem;
+    background: rgba(255, 170, 0, .07);
+    border: 1px solid rgba(255, 170, 0, .28);
+    border-radius: var(--r-sm);
+    font-size: .74rem;
+    color: var(--warn);
+    line-height: 1.5;
+}
+
+.ai-disclaimer-icon {
+    font-size: 1rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.ai-disclaimer strong {
+    color: var(--warn);
+}
+
 .kill-board-card {
     background: rgba(255,40,72,.03); border: 1px solid rgba(255,40,72,.2);
     border-radius: var(--r-lg); padding: 1rem 1.1rem;
