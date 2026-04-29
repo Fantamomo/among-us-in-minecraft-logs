@@ -33,10 +33,39 @@ function fmtDuration(ms) {
     return m > 0 ? `${m}m ${rs}s` : `${rs}s`;
 }
 
-function isImposterRole(r) {
-    if (!r || typeof r !== 'string') return false;
+const CREWMATE_ROLES = new Set(['crewmate','cameraman','engineer','caller','detective','the_damned','mayor','snitch','sheriff','seer']);
+const IMPOSTER_ROLES  = new Set(['imposter','impostor','miner','morphling','phantom','camouflager']);
+const NEUTRAL_ROLES   = new Set(['jester','cannibal','arsonist','executioner']);
+
+function getRoleTeam(r) {
+    if (!r || typeof r !== 'string') return null;
     const l = r.toLowerCase();
-    return l.includes('imposter') || l.includes('impostor') || l.includes('imposter');
+    if (IMPOSTER_ROLES.has(l))  return 'impostor';
+    if (CREWMATE_ROLES.has(l))  return 'crewmate';
+    if (NEUTRAL_ROLES.has(l))   return 'neutral';
+    // legacy fallback
+    if (l.includes('imposter') || l.includes('impostor')) return 'impostor';
+    return null;
+}
+
+function isImposterRole(r) { return getRoleTeam(r) === 'impostor'; }
+function isNeutralRole(r)  { return getRoleTeam(r) === 'neutral'; }
+function isArsonistRole(r) { return r?.toLowerCase() === 'arsonist'; }
+
+function getRoleBadgeClass(role, isBot) {
+    const team = getRoleTeam(role);
+    if (team === 'impostor') return 'rb-imp';
+    if (team === 'neutral')  return isArsonistRole(role) ? 'rb-arsonist' : 'rb-neutral';
+    if (team === 'crewmate') return 'rb-crew';
+    if (isBot)               return 'rb-bot';
+    return role ? 'rb-crew' : 'rb-other';
+}
+
+function getRoleNameColor(role) {
+    const team = getRoleTeam(role);
+    if (team === 'impostor') return 'var(--danger)';
+    if (team === 'neutral')  return isArsonistRole(role) ? 'var(--arsonist)' : 'var(--neutral)';
+    return 'var(--t1)';
 }
 
 function playerLabel(u) { if (!u) return '—'; return playerNames[u]?.display || shortUuid(u); }
@@ -126,8 +155,12 @@ function describeEvent(e) {
         case 'game_start_countdown': return { text: '⏳ Countdown started' };
         case 'countdown_aborted': return { text: `⏳ Countdown <span class="c-red">abgebrochen</span>`, extra: `Reason: ${d.reason} · ${d.remaining}s left` };
         case 'winner_announcement': {
-            const isImp = isImposterRole(d.winner) || d.winner?.toLowerCase().includes('impost');
-            return { text: `🏆 Winner: <strong class="${isImp ? 'c-red' : 'c-accent'}">${escHtml(d.winner || '?')}</strong>` };
+            const w = (d.winner || '').toLowerCase();
+            const isImp  = isImposterRole(d.winner) || w.includes('impost');
+            const isNeut = isNeutralRole(d.winner);
+            const isArso = isArsonistRole(d.winner);
+            const cls = isImp ? 'c-red' : (isArso ? 'c-arsonist' : (isNeut ? 'c-neutral' : 'c-accent'));
+            return { text: `🏆 Winner: <strong class="${cls}">${escHtml(d.winner || '?')}</strong>` };
         }
         case 'phase_change': return { text: `Phase <span class="t3">${d.old}</span> → <strong class="t1">${d.new}</strong>` };
         case 'host_change': return { text: `★ Host ${d.old ? pChip(d.old) : '<span class="t4">—</span>'} → ${d.new ? pChip(d.new) : '<span class="t4">—</span>'}` };
@@ -142,7 +175,11 @@ function describeEvent(e) {
                 return { text: `💀 ${pChip(d.player)} <span class="c-red">killed</span>`, extra: `Killer: ${pChip(r.killer)}` };
             return { text: `💀 ${pChip(d.player)} <span class="c-orange">died</span>`, extra: `Reason: ${r}` };
         }
-        case 'assign_role': return { text: `🎭 ${pChip(d.player)} → <strong class="${isImposterRole(d.role) ? 'c-red' : 'c-accent'}">${escHtml(d.role||'?')}</strong>` };
+        case 'assign_role': {
+            const team = getRoleTeam(d.role);
+            const cls = team === 'impostor' ? 'c-red' : (team === 'neutral' ? (isArsonistRole(d.role) ? 'c-arsonist' : 'c-neutral') : 'c-accent');
+            return { text: `🎭 ${pChip(d.player)} → <strong class="${cls}">${escHtml(d.role||'?')}</strong>` };
+        }
         case 'assign_modification': return { text: `🔧 ${pChip(d.player)} Modifications: <strong>${escHtml(d.modification||'?')}</strong>` };
         case 'task_assigned': return { text: `📋 ${pChip(d.player)} ← <span class="t2">${escHtml(d.task?.replace(/_/g,' ')||'?')}</span>` };
         case 'task_started': return { text: `▶ ${pChip(d.player)} starts <em class="t1">${escHtml(d.task?.replace(/_/g,' ')||'?')}</em>` };
@@ -324,10 +361,17 @@ async function renderLog(data) {
     if (winner) {
         const banner = getEl('winner-banner');
         banner.style.display = '';
-        const isImpWin = isImposterRole(winner) || winner.toLowerCase().includes('impost');
-        banner.className = 'winner-banner ' + (isImpWin ? 'imposters' : 'crewmates');
-        banner.innerHTML = `<div class="winner-title">${isImpWin ? '🔴' : '🔵'} ${escHtml(winner.toUpperCase())} WINS</div>
-        <div class="winner-sub">${isImpWin ? 'IMPOSTOR HAVE ELIMINATED THE CREW' : 'CREW HAS COMPLETED THEIR TASKS'}</div>`;
+        const isImpWin  = isImposterRole(winner) || winner.toLowerCase().includes('impost');
+        const isArsoWin = isArsonistRole(winner);
+        const isNeutWin = isNeutralRole(winner);
+        let bannerClass = 'crewmates', emoji = '🔵';
+        let sub = 'CREW HAS COMPLETED THEIR TASKS';
+        if (isImpWin)  { bannerClass = 'imposters';  emoji = '🔴'; sub = 'IMPOSTORS HAVE ELIMINATED THE CREW'; }
+        else if (isArsoWin) { bannerClass = 'arsonist'; emoji = '🔥'; sub = 'THE ARSONIST BURNED EVERYONE'; }
+        else if (isNeutWin) { bannerClass = 'neutrals';  emoji = '🟣'; sub = 'A NEUTRAL PLAYER WON ALONE'; }
+        banner.className = 'winner-banner ' + bannerClass;
+        banner.innerHTML = `<div class="winner-title">${emoji} ${escHtml(winner.toUpperCase())} WINS</div>
+        <div class="winner-sub">${sub}</div>`;
     }
     const customData = data.customData || {};
     const aiShort = customData.ai_short_summary;
@@ -448,11 +492,14 @@ function buildPlayers(allUuids, players, log, createdAt) {
     grid.innerHTML = '';
     allUuids.forEach(uuid => {
         const p = players[uuid];
-        const isImp = isImposterRole(p.role);
-        const roleClass = isImp ? 'impostor' : (p.role ? 'crewmate' : '');
+        const team     = getRoleTeam(p.role);
+        const isImp    = team === 'impostor';
+        const isNeutrl = team === 'neutral';
+        const isArso   = isArsonistRole(p.role);
+        const roleClass = team || '';
         const deadClass = p.dead ? 'dead' : '';
-        const botClass = p.isBot ? 'is-bot' : '';
-        const rbClass = isImp ? 'rb-imp' : (p.role ? 'rb-crew' : (p.isBot ? 'rb-bot' : 'rb-other'));
+        const botClass  = p.isBot ? 'is-bot' : '';
+        const rbClass   = getRoleBadgeClass(p.role, p.isBot);
         const pct = p.tasks.assigned.size > 0 ? Math.round(p.tasks.completed.size / p.tasks.assigned.size * 100) : 0;
 
         let deathLine = '';
@@ -670,7 +717,9 @@ function buildMeetings(log, players, createdAt) {
         const votes = log.filter(e => (e.type === 'meeting_vote_for' || e.type === 'meeting_vote_skip') && after(e.timestamp));
         const result = log.find(e => e.type === 'meeting_result' && after(e.timestamp));
         const ejected = result?.data?.ejected;
-        const wasImp = ejected ? isImposterRole(players[ejected]?.role) : null;
+        const ejRole = ejected ? players[ejected]?.role : null;
+        const ejTeam = getRoleTeam(ejRole);
+        const ejLabel = ejTeam === 'impostor' ? '✓ Imp' : (ejTeam === 'neutral' ? '⚪ Neutral' : '✗ Crew');
         return `<div class="meeting-card" data-meeting-idx="${i}">
       <div class="meeting-no">MTG #${i+1} · ${d.reason || '?'} · ${fmtRelative(mc.timestamp, createdAt)}</div>
       <div style="font-size:.76rem;margin-bottom:4px;">
@@ -679,7 +728,7 @@ function buildMeetings(log, players, createdAt) {
       </div>
       ${votes.length > 0 ? `<div style="margin-bottom:4px;">${votes.slice(0,4).map(v => `<div class="vote-row">${pChip(v.data.voter)} <span class="vote-arrow">→</span> ${v.type === 'meeting_vote_skip' ? '<span class="t3">SKIP</span>' : pChip(v.data.target)}${v.data.mayorVote ? '<span class="c-orange mono" style="font-size:.55rem;margin-left:2px;">M</span>' : ''}</div>`).join('')}${votes.length > 4 ? `<div class="mono t4" style="font-size:.58rem;">+${votes.length-4} more</div>` : ''}</div>` : ''}
       ${result ? `<div style="padding-top:4px;border-top:1px solid var(--border);font-size:.72rem;">
-        ${ejected ? `<span class="c-red">⚡ ${pChip(ejected)} ejected</span> <span class="mono t4" style="font-size:.56rem;">${wasImp ? '✓ Imp' : '✗ Crew'}</span>` : `<span class="t3">∅ No Ejection</span>`}
+        ${ejected ? `<span class="c-red">⚡ ${pChip(ejected)} ejected</span> <span class="mono t4" style="font-size:.56rem;">${ejLabel}</span>` : `<span class="t3">∅ No Ejection</span>`}
       </div>` : ''}
     </div>`;
     }).join('');
@@ -691,6 +740,9 @@ function buildInsights(players, log, createdAt, startEvt) {
 
     const impostors = allUuids.filter(u => isImposterRole(players[u].role));
     if (impostors.length > 0) ins.push({ type:'danger', text:`🔴 Imposters (${impostors.length}): ${impostors.map(u => `<strong class="c-red">${escHtml(playerLabel(u))}</strong>`).join(', ')}` });
+
+    const neutrals = allUuids.filter(u => isNeutralRole(players[u].role));
+    if (neutrals.length > 0) ins.push({ type:'neutral-ins', text:`🟣 Neutrals (${neutrals.length}): ${neutrals.map(u => `<strong class="${isArsonistRole(players[u].role) ? 'c-arsonist' : 'c-neutral'}">${escHtml(playerLabel(u))} <span style="opacity:.7;font-size:.85em;">(${players[u].role})</span></strong>`).join(', ')}` });
 
     const bots = allUuids.filter(u => players[u].isBot);
     if (bots.length > 0) ins.push({ type:'info', text:`🤖 Bots (${bots.length}): ${bots.map(u => pChip(u)).join(', ')}` });
@@ -711,8 +763,9 @@ function buildInsights(players, log, createdAt, startEvt) {
     });
 
     log.filter(e => e.type === 'meeting_result' && e.data?.ejected).forEach(e => {
-        const ej = e.data.ejected, wasImp = isImposterRole(players[ej]?.role);
-        ins.push({ type: wasImp ? 'success' : 'warn', text: wasImp ? `✅ ${pChip(ej)} ejected correctly (Impostor)` : `❌ ${pChip(ej)} wrongly ejected (${players[ej]?.role || 'Crew'})` });
+        const ej = e.data.ejected, team = getRoleTeam(players[ej]?.role);
+        const wasImp = team === 'impostor', wasNeut = team === 'neutral';
+        ins.push({ type: wasImp ? 'success' : 'warn', text: wasImp ? `✅ ${pChip(ej)} ejected correctly (Impostor)` : (wasNeut ? `⚪ ${pChip(ej)} ejected — was Neutral (${players[ej]?.role || '?'})` : `❌ ${pChip(ej)} wrongly ejected (${players[ej]?.role || 'Crew'})`) });
     });
 
     log.filter(e => e.type === 'meeting_result' && !e.data?.ejected).forEach(() => ins.push({ type:'neutral', text:`🤷 Meeting ended without dismissal` }));
@@ -907,7 +960,9 @@ function renderTimeline() {
             if (roleFilter === 'impostor') {
                 if (!evUuids.some(u => isImposterRole(G.players[u]?.role))) return false;
             } else if (roleFilter === 'crewmate') {
-                if (!evUuids.some(u => !isImposterRole(G.players[u]?.role) && !G.players[u]?.isBot && G.players[u]?.role)) return false;
+                if (!evUuids.some(u => getRoleTeam(G.players[u]?.role) === 'crewmate')) return false;
+            } else if (roleFilter === 'neutral') {
+                if (!evUuids.some(u => isNeutralRole(G.players[u]?.role))) return false;
             } else if (roleFilter === 'bot') {
                 if (!evUuids.some(u => G.players[u]?.isBot)) return false;
             }
@@ -973,6 +1028,8 @@ function openPlayerModal(uuid) {
     if (!overlay || !content) return;
 
     const isImp = isImposterRole(p.role);
+    const nameColor = getRoleNameColor(p.role);
+    const rbClass   = getRoleBadgeClass(p.role, p.isBot);
     const pct = p.tasks.assigned.size > 0 ? Math.round(p.tasks.completed.size / p.tasks.assigned.size * 100) : 0;
     let timeAlive = '';
     if (p.dead && p.deadTs) {
@@ -988,10 +1045,10 @@ function openPlayerModal(uuid) {
     <div class="modal-header" style="position:relative;">
       <img class="modal-avatar" src="${getAvatarUrl(uuid)}" alt="" onerror="this.style.opacity=.3">
       <div style="flex:1;min-width:0;">
-        <div class="modal-name" style="color:${isImp ? 'var(--danger)' : 'var(--t1)'}">${escHtml(playerLabel(uuid))}${p.isBot ? ' <span style="color:var(--safe);font-size:.8rem;">🤖 BOT</span>' : ''}</div>
+        <div class="modal-name" style="color:${nameColor}">${escHtml(playerLabel(uuid))}${p.isBot ? ' <span style="color:var(--safe);font-size:.8rem;">🤖 BOT</span>' : ''}</div>
         <div class="modal-uuid">${uuid}</div>
         <div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:4px;">
-          <span class="role-badge ${isImp ? 'rb-imp' : (p.role ? 'rb-crew' : (p.isBot ? 'rb-bot' : 'rb-other'))}">${escHtml(p.role || 'unknown')}</span>
+          <span class="role-badge ${rbClass}">${escHtml(p.role || 'unknown')}</span>
           ${p.wasHost ? `<span class="role-badge" style="background:rgba(255,170,0,.14);color:var(--warn);border:1px solid rgba(255,170,0,.3);">HOST</span>` : ''}
           ${p.dead ? `<span class="role-badge" style="background:rgba(255,40,72,.14);color:var(--danger);border:1px solid rgba(255,40,72,.3);">DEAD</span>` : `<span class="role-badge" style="background:rgba(0,230,118,.12);color:var(--safe);border:1px solid rgba(0,230,118,.25);">ALIVE</span>`}
           ${p.modifications.map(m => `<span class="role-badge rb-other">${escHtml(m)}</span>`).join('')}
