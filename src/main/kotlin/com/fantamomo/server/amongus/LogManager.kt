@@ -15,6 +15,7 @@ import java.nio.file.Path
 import java.security.SecureRandom
 import kotlin.io.path.*
 import kotlin.time.Clock
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.measureTimedValue
 
@@ -49,7 +50,7 @@ class LogManager(db: Database, val scope: CoroutineScope) {
     }
 
     @OptIn(ExperimentalSerializationApi::class)
-    suspend fun createLog(log: JsonObject): String {
+    suspend fun createLog(log: JsonObject, ttl: Duration): String {
         var id: String
         var file: Path
 
@@ -73,7 +74,7 @@ class LogManager(db: Database, val scope: CoroutineScope) {
             }
         }
 
-        val log = service.createLog(id, size, ServerConfig.SAVE_LOG_DURATION)
+        val log = service.createLog(id, size, ttl)
         if (log.id != id) {
             logger.error("Log ID mismatch after creation: expected $id, got ${log.id}")
             throw IllegalStateException("Log ID mismatch after creation")
